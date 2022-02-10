@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>tool</class>
+ <widget class="QMainWindow" name="tool">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1040</width>
+    <height>618</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <layout class="QVBoxLayout" name="playerLayout">
+      <item>
+       <widget class="VideoWidget" name="m_videoWidget" native="true"/>
+      </item>
+      <item>
+       <widget class="PlayerControls" name="m_playerControls" native="true"/>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="editorLayout">
+      <item>
+       <widget class="Editor" name="m_editor"/>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1040</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="close"/>
+   </widget>
+   <widget class="QMenu" name="menuMedia_Player">
+    <property name="title">
+     <string>Player</string>
+    </property>
+    <addaction name="player_open"/>
+   </widget>
+   <widget class="QMenu" name="menuEditor">
+    <property name="title">
+     <string>Editor</string>
+    </property>
+    <addaction name="editor_open"/>
+    <addaction name="editor_openTranscript"/>
+    <addaction name="editor_save"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuMedia_Player"/>
+   <addaction name="menuEditor"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="close">
+   <property name="text">
+    <string>Close</string>
+   </property>
+  </action>
+  <action name="player_open">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="editor_open">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="editor_save">
+   <property name="text">
+    <string>Save Transcript</string>
+   </property>
+  </action>
+  <action name="editor_openTranscript">
+   <property name="text">
+    <string>Open Transcript</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>VideoWidget</class>
+   <extends>QWidget</extends>
+   <header>videowidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PlayerControls</class>
+   <extends>QWidget</extends>
+   <header>playercontrols.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Editor</class>
+   <extends>QPlainTextEdit</extends>
+   <header>editor.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
