@@ -19,6 +19,6 @@ protected:
 private:
     int blockToHighlight{-1};
     int wordToHighlight{-1};
-    QTextCharFormat blockHighlightFormat, wordHighlightFormat, timeStampHighlightFormat;
+    QTextCharFormat blockHighlightFormat, wordHighlightFormat, timeStampHighlightFormat, speakerHighlightFormat;
 };
 

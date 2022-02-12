@@ -35,6 +35,9 @@ signals:
 public slots:
     void open();
     void openTranscript();
+    void showBlocksFromData();
+    void highlightTranscript(const QTime& elapsedTime);
+
 
 private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
@@ -43,18 +46,17 @@ private slots:
     void contentChanged(int position, int charsRemoved, int charsAdded);
 
 private:
-    void showBlocks();
-    void addBlock(qint64 blockNumber);
-    void setContent();
-    void loadTranscriptData(QFile* file);
-    block fromEditor(qint64 blockNumber);
     QTime getTime(const QString& text);
+    word makeWord(const QTime& t, const QString& s);
+    block fromEditor(qint64 blockNumber);
+    void loadTranscriptData(QFile* file);
 
     bool settingContent{false};
     QWidget *lineNumberArea;
     QFile *m_file = nullptr;
     QList<block> m_blocks;
     Highlighter *m_highlighter = nullptr;
+    qint64 highlightedBlock = -1;
 };
 
 
@@ -62,6 +64,13 @@ struct Editor::word
 {
     QTime timeStamp;
     QString text;
+
+    inline bool operator==(word w) const
+    {
+        if (w.timeStamp == timeStamp && w.text == text)
+            return true;
+        return false;
+    }
 };
 
 struct Editor::block
@@ -70,6 +79,13 @@ struct Editor::block
     QString text;
     QString speaker;
     QList<word> words;
+
+    inline bool operator==(block b) const
+    {
+          if(b.timeStamp==timeStamp && b.text==text && b.speaker==speaker && b.words==words)
+             return true;
+          return false;
+    }
 };
 
 class LineNumberArea : public QWidget

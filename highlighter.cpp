@@ -1,11 +1,14 @@
 #include "highlighter.h"
 
+#include <QRegularExpression>
+
 Highlighter::Highlighter(QTextDocument *parent)
     : QSyntaxHighlighter(parent)
 {
     blockHighlightFormat.setForeground(Qt::green);
-    wordHighlightFormat.setForeground(Qt::yellow);
+    wordHighlightFormat.setBackground(Qt::yellow);
     timeStampHighlightFormat.setForeground(Qt::red);
+    speakerHighlightFormat.setForeground(QColor(Qt::blue).lighter(120));
 }
 
 void Highlighter::highlightBlock(const QString &text)
@@ -13,12 +16,16 @@ void Highlighter::highlightBlock(const QString &text)
     if (blockToHighlight == -1)
         return;
     else if (currentBlock().blockNumber() == blockToHighlight) {
-        int textEndingPosition = text.split("[")[0].size();
-        int timeStampStartPosition = text.split("[")[1].size();
+        int speakerEnd = QRegularExpression("\\[[\\w\\.]*]:").match(text).capturedEnd();
+        int timeStampStart = QRegularExpression("\\[(\\d?\\d:)?[0-5]?\\d:[0-5]?\\d(\\.\\d\\d?\\d?)?]").match(text).capturedStart();
 
-        setFormat(0, textEndingPosition, blockHighlightFormat);
-        setFormat(textEndingPosition, timeStampStartPosition + 1, timeStampHighlightFormat);
+        qDebug() << speakerEnd << timeStampStart;
+        setFormat(0, speakerEnd, speakerHighlightFormat);
+        setFormat(speakerEnd, timeStampStart, blockHighlightFormat);
+        setFormat(timeStampStart, text.size(), timeStampHighlightFormat);
+
         auto words = text.split(" ");
+
         if (wordToHighlight != -1 && wordToHighlight < words.size()) {
             int start{0};
             for (int i=0; i < wordToHighlight; i++) start += (words[i].size() + 1);

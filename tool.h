@@ -17,6 +17,7 @@ public:
     ~tool();
 
 private:
+
     MediaPlayer *player = nullptr;
     Ui::tool *ui;
 };

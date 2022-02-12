@@ -37,10 +37,14 @@ tool::tool(QWidget *parent)
     connect(player, &MediaPlayer::positionChanged, ui->m_playerControls, [=]() {ui->m_playerControls->setPositionInfo(player->getPositionInfo());});
     connect(player, &MediaPlayer::message, this->statusBar(), &QStatusBar::showMessage);
 
-    //connect Editor controls
+    // Connect Editor controls
     connect(ui->editor_open, &QAction::triggered, ui->m_editor, &Editor::open);
     connect(ui->editor_openTranscript, &QAction::triggered, ui->m_editor, &Editor::openTranscript);
+    connect(ui->editor_debugBlocks, &QAction::triggered, ui->m_editor, &Editor::showBlocksFromData);
     connect(ui->m_editor, &Editor::message, this->statusBar(), &QStatusBar::showMessage);
+
+    // Connect Player elapsed time to highlight Editor
+    connect(player, &MediaPlayer::positionChanged, ui->m_editor, [=]() {ui->m_editor->highlightTranscript(player->elapsedTime());});
 }
 
 tool::~tool()

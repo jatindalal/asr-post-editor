@@ -62,6 +62,7 @@
     <addaction name="editor_open"/>
     <addaction name="editor_openTranscript"/>
     <addaction name="editor_save"/>
+    <addaction name="editor_debugBlocks"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuMedia_Player"/>
@@ -91,6 +92,11 @@
   <action name="editor_openTranscript">
    <property name="text">
     <string>Open Transcript</string>
+   </property>
+  </action>
+  <action name="editor_debugBlocks">
+   <property name="text">
+    <string>Debug Blocks</string>
    </property>
   </action>
  </widget>
