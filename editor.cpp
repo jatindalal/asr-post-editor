@@ -301,7 +301,7 @@ void Editor::loadTranscriptData(QFile *file)
 
 void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
 {
-    if ((charsAdded || charsRemoved) && !settingContent) {
+    if ((charsAdded || charsRemoved) && !settingContent && m_blocks.size()) {
         if (m_highlighter)
             delete m_highlighter;
         m_highlighter = new Highlighter(this->document());
@@ -332,5 +332,9 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
                          " [" + m_blocks[currentBlockNumber].timeStamp.toString("hh:mm:ss.zzz") + "]";
         if (textCursor().block().text().trimmed() != blockText)
             m_blocks.replace(currentBlockNumber, fromEditor(currentBlockNumber));
+    }
+    else if (!m_blocks.size()) {
+        for (int i = 0; i < document()->blockCount(); i++)
+            m_blocks.append(fromEditor(i));
     }
 }

@@ -19,7 +19,6 @@ void Highlighter::highlightBlock(const QString &text)
         int speakerEnd = QRegularExpression("\\[[\\w\\.]*]:").match(text).capturedEnd();
         int timeStampStart = QRegularExpression("\\[(\\d?\\d:)?[0-5]?\\d:[0-5]?\\d(\\.\\d\\d?\\d?)?]").match(text).capturedStart();
 
-        qDebug() << speakerEnd << timeStampStart;
         setFormat(0, speakerEnd, speakerHighlightFormat);
         setFormat(speakerEnd, timeStampStart, blockHighlightFormat);
         setFormat(timeStampStart, text.size(), timeStampHighlightFormat);
