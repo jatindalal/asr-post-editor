@@ -41,6 +41,7 @@ tool::tool(QWidget *parent)
     connect(ui->editor_open, &QAction::triggered, ui->m_editor, &Editor::open);
     connect(ui->editor_openTranscript, &QAction::triggered, ui->m_editor, &Editor::openTranscript);
     connect(ui->editor_debugBlocks, &QAction::triggered, ui->m_editor, &Editor::showBlocksFromData);
+    connect(ui->editor_save, &QAction::triggered, ui->m_editor, &Editor::saveTranscript);
     connect(ui->m_editor, &Editor::message, this->statusBar(), &QStatusBar::showMessage);
 
     // Connect Player elapsed time to highlight Editor

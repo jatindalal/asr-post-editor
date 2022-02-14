@@ -173,6 +173,28 @@ void Editor::openTranscript()
     }
 }
 
+void Editor::saveTranscript()
+{
+    QFileDialog fileDialog(this);
+    fileDialog.setAcceptMode(QFileDialog::AcceptSave);
+    fileDialog.setWindowTitle(tr("Save Transcript"));
+    fileDialog.setDirectory(QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation).value(0, QDir::homePath()));
+    if (fileDialog.exec() == QDialog::Accepted) {
+        auto fileUrl = QUrl(fileDialog.selectedUrls().constFirst());
+
+        if (!document()->isEmpty()) {
+            auto *file = new QFile(fileUrl.toLocalFile());
+            if (!file->open(QIODevice::WriteOnly)) {
+                qInfo() << file->errorString();
+                return;
+            }
+
+            saveXml(file);
+        }
+
+    }
+}
+
 void Editor::showBlocksFromData()
 {
     for (auto& m_block: qAsConst(m_blocks)) {
@@ -223,6 +245,7 @@ Editor::word Editor::makeWord(const QTime& t, const QString& s)
     return w;
 }
 
+// TODO: Space in a speaker name breaks speaker detection
 Editor::block Editor::fromEditor(qint64 blockNumber)
 {
     QTime timeStamp;
@@ -299,8 +322,40 @@ void Editor::loadTranscriptData(QFile *file)
     }
 }
 
+void Editor::saveXml(QFile* file)
+{
+    QXmlStreamWriter writer(file);
+    writer.setAutoFormatting(true);
+    writer.writeStartDocument();
+    writer.writeStartElement("transcript");
+
+    for (auto& a_block: qAsConst(m_blocks)) {
+        if (a_block.text != "") {
+            auto timeStamp = a_block.timeStamp;
+            QString timeStampString = timeStamp.toString("hh:mm:ss.zzz");
+            auto speaker = a_block.speaker;
+
+            writer.writeStartElement("line");
+            writer.writeAttribute("timestamp", timeStampString);
+            writer.writeAttribute("speaker", speaker);
+
+            for (auto& a_word: qAsConst(a_block.words)) {
+                writer.writeStartElement("word");
+                writer.writeAttribute("timestamp", a_word.timeStamp.toString("hh:mm:ss.zzz"));
+                writer.writeCharacters(a_word.text);
+                writer.writeEndElement();
+            }
+            writer.writeEndElement();
+        }
+    }
+    writer.writeEndElement();
+    file->close();
+    delete file;
+}
+
 void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
 {
+    // If chars are added or deleted, checks if editor isn't empty or we are opening a file
     if ((charsAdded || charsRemoved) && !settingContent && m_blocks.size()) {
         if (m_highlighter)
             delete m_highlighter;
@@ -333,6 +388,7 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
         if (textCursor().block().text().trimmed() != blockText)
             m_blocks.replace(currentBlockNumber, fromEditor(currentBlockNumber));
     }
+    // if no document is loaded then just fill blocks with content of editor
     else if (!m_blocks.size()) {
         for (int i = 0; i < document()->blockCount(); i++)
             m_blocks.append(fromEditor(i));
