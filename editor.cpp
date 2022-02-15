@@ -355,42 +355,46 @@ void Editor::saveXml(QFile* file)
 
 void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
 {
-    // If chars are added or deleted, checks if editor isn't empty or we are opening a file
-    if ((charsAdded || charsRemoved) && !settingContent && m_blocks.size()) {
-        if (m_highlighter)
-            delete m_highlighter;
-        m_highlighter = new Highlighter(this->document());
-
-        int currentBlockNumber = textCursor().blockNumber();
-
-        if(m_blocks.size() != blockCount()) {
-            auto blocksChanged = m_blocks.size() - blockCount();
-            if (blocksChanged > 0) { // Blocks deleted
-                for (int i = 1; i <= blocksChanged; i++)
-                    m_blocks.removeAt(currentBlockNumber + 1);
-            }
-            else { // Blocks added
-                if (!(m_blocks[currentBlockNumber + blocksChanged] == fromEditor(currentBlockNumber + blocksChanged)))
-                    m_blocks.replace(currentBlockNumber + blocksChanged, fromEditor(currentBlockNumber + blocksChanged));
-                for (int i = 1; i <= -blocksChanged; i++) {
-                    if (currentBlockNumber == 1)
-                        m_blocks.insert(currentBlockNumber + blocksChanged, fromEditor(currentBlockNumber - i));
-                    else
-                        m_blocks.insert(currentBlockNumber + blocksChanged + 1, fromEditor(currentBlockNumber - i + 1));
-                }
-            }
-        }
-        // If current block's text is changed then replace it with new data
-        // TODO: If text of some word is changed or new word is added then only that should have invalid timestamp
-        auto blockText = "[" + m_blocks[currentBlockNumber].speaker + "]: " +
-                          m_blocks[currentBlockNumber].text +
-                         " [" + m_blocks[currentBlockNumber].timeStamp.toString("hh:mm:ss.zzz") + "]";
-        if (textCursor().block().text().trimmed() != blockText)
-            m_blocks.replace(currentBlockNumber, fromEditor(currentBlockNumber));
-    }
-    // if no document is loaded then just fill blocks with content of editor
-    else if (!m_blocks.size()) {
+    // If chars aren't added or deleted then return
+    if (!(charsAdded || charsRemoved) || settingContent)
+        return;
+    else if (!m_blocks.size()) { // If block data is empty (i.e no file opened) just fill them from editor
         for (int i = 0; i < document()->blockCount(); i++)
             m_blocks.append(fromEditor(i));
+        return;
     }
+
+    if (m_highlighter)
+        delete m_highlighter;
+    m_highlighter = new Highlighter(this->document());
+
+
+    int currentBlockNumber = textCursor().blockNumber();
+
+    if(m_blocks.size() != blockCount()) {
+        auto blocksChanged = m_blocks.size() - blockCount();
+        if (blocksChanged > 0) { // Blocks deleted
+            for (int i = 1; i <= blocksChanged; i++)
+                m_blocks.removeAt(currentBlockNumber + 1);
+        }
+        else { // Blocks added
+            if (!(m_blocks[currentBlockNumber + blocksChanged] == fromEditor(currentBlockNumber + blocksChanged)))
+                m_blocks.replace(currentBlockNumber + blocksChanged, fromEditor(currentBlockNumber + blocksChanged));
+            for (int i = 1; i <= -blocksChanged; i++) {
+                if (currentBlockNumber == 1)
+                    m_blocks.insert(currentBlockNumber + blocksChanged, fromEditor(currentBlockNumber - i));
+                else
+                    m_blocks.insert(currentBlockNumber + blocksChanged + 1, fromEditor(currentBlockNumber - i + 1));
+            }
+        }
+    }
+    // If current block's text is changed then replace it with new data
+    // TODO: If text of some word is changed or new word is added then only that should have invalid timestamp
+    auto blockText = "[" + m_blocks[currentBlockNumber].speaker + "]: " +
+                      m_blocks[currentBlockNumber].text +
+                     " [" + m_blocks[currentBlockNumber].timeStamp.toString("hh:mm:ss.zzz") + "]";
+    if (textCursor().block().text().trimmed() != blockText)
+        m_blocks.replace(currentBlockNumber, fromEditor(currentBlockNumber)); // TODO can be implemented here
+
+    m_highlighter->setBlockToHighlight(highlightedBlock);
 }
