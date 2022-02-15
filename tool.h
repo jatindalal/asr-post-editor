@@ -16,6 +16,9 @@ public:
     tool(QWidget *parent = nullptr);
     ~tool();
 
+private slots:
+    void handleMediaPlayerError();
+
 private:
 
     MediaPlayer *player = nullptr;

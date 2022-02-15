@@ -45,6 +45,7 @@ tool::tool(QWidget *parent)
     connect(ui->m_playerControls, &PlayerControls::changePosition, player, &MediaPlayer::setPosition);
     connect(player, &MediaPlayer::positionChanged, ui->m_playerControls, [=]() {ui->m_playerControls->setPositionInfo(player->getPositionInfo());});
     connect(player, &MediaPlayer::message, this->statusBar(), &QStatusBar::showMessage);
+    connect(player, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error), this, &tool::handleMediaPlayerError);
 
     // Connect Editor controls
     connect(ui->editor_open, &QAction::triggered, ui->m_editor, &Editor::open);
@@ -65,5 +66,16 @@ tool::~tool()
 {
     delete player;
     delete ui;
+}
+
+void tool::handleMediaPlayerError()
+{
+    const QString errorString = player->errorString();
+    QString message = "Error: ";
+    if (errorString.isEmpty())
+        message += " #" + QString::number(int(player->error()));
+    else
+        message += errorString;
+    statusBar()->showMessage(message);
 }
 
