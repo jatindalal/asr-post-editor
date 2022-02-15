@@ -158,16 +158,7 @@ void Editor::openTranscript()
         }
 
         loadTranscriptData(m_file);
-        if (!settingContent) {
-            settingContent = true;
-            QString content("");
-            for (auto& block: qAsConst(m_blocks)) {
-                auto blockText = "[" + block.speaker + "]: " + block.text + " [" + block.timeStamp.toString("hh:mm:ss.zzz") + "]";
-                content.append(blockText + "\n");
-            }
-            setPlainText(content.trimmed());
-            settingContent = false;
-        }
+        setContent();
 
         emit message("Opened transcript " + fileUrl->fileName());
     }
@@ -353,6 +344,20 @@ void Editor::saveXml(QFile* file)
     delete file;
 }
 
+void Editor::setContent()
+{
+    if (!settingContent) {
+        settingContent = true;
+        QString content("");
+        for (auto& block: qAsConst(m_blocks)) {
+            auto blockText = "[" + block.speaker + "]: " + block.text + " [" + block.timeStamp.toString("hh:mm:ss.zzz") + "]";
+            content.append(blockText + "\n");
+        }
+        setPlainText(content.trimmed());
+        settingContent = false;
+    }
+}
+
 void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
 {
     // If chars aren't added or deleted then return
@@ -397,4 +402,63 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
         m_blocks.replace(currentBlockNumber, fromEditor(currentBlockNumber)); // TODO can be implemented here
 
     m_highlighter->setBlockToHighlight(highlightedBlock);
+}
+
+void Editor::jumpToHighlightedLine()
+{
+    if (highlightedBlock == -1)
+        return;
+    QTextCursor cursor(document()->findBlockByNumber(highlightedBlock));
+    setTextCursor(cursor);
+}
+
+void Editor::splitLine(const QTime& elapsedTime)
+{
+    auto cursor = textCursor();
+    if (cursor.blockNumber() != highlightedBlock)
+        return;
+
+    int positionInBlock = cursor.positionInBlock();
+    auto blockText = cursor.block().text();
+    auto textBeforeCursor = blockText.left(positionInBlock);
+    auto textAfterCursor = blockText.right(blockText.size() - positionInBlock);
+    auto cutWordLeft = textBeforeCursor.split(" ").last();
+    auto cutWordRight = textAfterCursor.split(" ").first();
+    int wordNumber = textBeforeCursor.count(" ");
+    if (m_blocks[highlightedBlock].speaker != "")
+        wordNumber--;
+
+    if (wordNumber < 0 || wordNumber >= m_blocks[highlightedBlock].words.size())
+        return;
+
+    if (textBeforeCursor.contains("]:"))
+        textBeforeCursor = textBeforeCursor.split("]:").last();
+    if (textAfterCursor.contains("["))
+        textAfterCursor = textAfterCursor.split("[").first();
+
+    auto timeStampOfCutWord = m_blocks[highlightedBlock].words[wordNumber].timeStamp;
+    QList<word> words;
+    int sizeOfWordsAfter = m_blocks[highlightedBlock].words.size() - wordNumber - 1;
+
+    if (cutWordRight != "")
+        words.append(makeWord(timeStampOfCutWord, cutWordRight));
+    for (int i = 0; i < sizeOfWordsAfter; i++) {
+        words.append(m_blocks[highlightedBlock].words[wordNumber + 1]);
+        m_blocks[highlightedBlock].words.removeAt(wordNumber + 1);
+    }
+
+    if (cutWordLeft == "")
+        m_blocks[highlightedBlock].words.removeAt(wordNumber);
+    else {
+        m_blocks[highlightedBlock].words[wordNumber].text = cutWordLeft;
+        m_blocks[highlightedBlock].words[wordNumber].timeStamp = elapsedTime;
+    }
+
+    block blockToInsert = {m_blocks[highlightedBlock].timeStamp, textAfterCursor.trimmed(), m_blocks[highlightedBlock].speaker, words};
+    m_blocks.insert(highlightedBlock + 1, blockToInsert);
+
+    m_blocks[highlightedBlock].text = textBeforeCursor.trimmed();
+    m_blocks[highlightedBlock].timeStamp = elapsedTime;
+
+    setContent();
 }

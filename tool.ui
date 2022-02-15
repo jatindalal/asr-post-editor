@@ -40,7 +40,7 @@
      <x>0</x>
      <y>0</y>
      <width>1040</width>
-     <height>28</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -54,6 +54,7 @@
      <string>Player</string>
     </property>
     <addaction name="player_open"/>
+    <addaction name="player_togglePlay"/>
    </widget>
    <widget class="QMenu" name="menuEditor">
     <property name="title">
@@ -63,6 +64,8 @@
     <addaction name="editor_openTranscript"/>
     <addaction name="editor_save"/>
     <addaction name="editor_debugBlocks"/>
+    <addaction name="editor_jumpToLine"/>
+    <addaction name="editor_splitLine"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuMedia_Player"/>
@@ -97,6 +100,21 @@
   <action name="editor_debugBlocks">
    <property name="text">
     <string>Debug Blocks</string>
+   </property>
+  </action>
+  <action name="editor_jumpToLine">
+   <property name="text">
+    <string>Jump to Highlighted Line</string>
+   </property>
+  </action>
+  <action name="player_togglePlay">
+   <property name="text">
+    <string>Play / Pause</string>
+   </property>
+  </action>
+  <action name="editor_splitLine">
+   <property name="text">
+    <string>Split Line</string>
    </property>
   </action>
  </widget>

@@ -38,6 +38,8 @@ public slots:
     void saveTranscript();
     void showBlocksFromData();
     void highlightTranscript(const QTime& elapsedTime);
+    void jumpToHighlightedLine();
+    void splitLine(const QTime& elapsedTime);
 
 private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
@@ -50,6 +52,7 @@ private:
     word makeWord(const QTime& t, const QString& s);
     block fromEditor(qint64 blockNumber);
     void loadTranscriptData(QFile* file);
+    void setContent();
     void saveXml(QFile* file);
 
     bool settingContent{false};

@@ -19,6 +19,15 @@ tool::tool(QWidget *parent)
 
     // Connect Player Controls and Media Player
     connect(ui->player_open, &QAction::triggered, player, &MediaPlayer::open);
+    connect(ui->player_togglePlay,
+            &QAction::triggered,
+            player,
+            [=]() { if (player->state() == MediaPlayer::PausedState)
+                        player->play();
+                    else if (player->state() == MediaPlayer::PlayingState)
+                        player->pause();
+                  }
+            );
     connect(ui->m_playerControls, &PlayerControls::play, player, &QMediaPlayer::play);
     connect(ui->m_playerControls, &PlayerControls::pause, player, &QMediaPlayer::pause);
     connect(ui->m_playerControls, &PlayerControls::stop, player, &QMediaPlayer::stop);
@@ -42,6 +51,8 @@ tool::tool(QWidget *parent)
     connect(ui->editor_openTranscript, &QAction::triggered, ui->m_editor, &Editor::openTranscript);
     connect(ui->editor_debugBlocks, &QAction::triggered, ui->m_editor, &Editor::showBlocksFromData);
     connect(ui->editor_save, &QAction::triggered, ui->m_editor, &Editor::saveTranscript);
+    connect(ui->editor_jumpToLine, &QAction::triggered, ui->m_editor, &Editor::jumpToHighlightedLine);
+    connect(ui->editor_splitLine, &QAction::triggered, ui->m_editor, [=]() {ui->m_editor->splitLine(player->elapsedTime());});
     connect(ui->m_editor, &Editor::message, this->statusBar(), &QStatusBar::showMessage);
 
     // Connect Player elapsed time to highlight Editor
