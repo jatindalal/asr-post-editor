@@ -66,6 +66,8 @@
     <addaction name="editor_debugBlocks"/>
     <addaction name="editor_jumpToLine"/>
     <addaction name="editor_splitLine"/>
+    <addaction name="editor_mergeUp"/>
+    <addaction name="editor_mergeDown"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuMedia_Player"/>
@@ -115,6 +117,16 @@
   <action name="editor_splitLine">
    <property name="text">
     <string>Split Line</string>
+   </property>
+  </action>
+  <action name="editor_mergeUp">
+   <property name="text">
+    <string>Merge Up</string>
+   </property>
+  </action>
+  <action name="editor_mergeDown">
+   <property name="text">
+    <string>Merge Down</string>
    </property>
   </action>
  </widget>

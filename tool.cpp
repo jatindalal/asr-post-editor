@@ -53,6 +53,8 @@ tool::tool(QWidget *parent)
     connect(ui->editor_save, &QAction::triggered, ui->m_editor, &Editor::saveTranscript);
     connect(ui->editor_jumpToLine, &QAction::triggered, ui->m_editor, &Editor::jumpToHighlightedLine);
     connect(ui->editor_splitLine, &QAction::triggered, ui->m_editor, [=]() {ui->m_editor->splitLine(player->elapsedTime());});
+    connect(ui->editor_mergeUp, &QAction::triggered, ui->m_editor, &Editor::mergeUp);
+    connect(ui->editor_mergeDown, &QAction::triggered, ui->m_editor, &Editor::mergeDown);
     connect(ui->m_editor, &Editor::message, this->statusBar(), &QStatusBar::showMessage);
 
     // Connect Player elapsed time to highlight Editor

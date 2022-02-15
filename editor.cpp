@@ -170,6 +170,7 @@ void Editor::saveTranscript()
     fileDialog.setAcceptMode(QFileDialog::AcceptSave);
     fileDialog.setWindowTitle(tr("Save Transcript"));
     fileDialog.setDirectory(QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation).value(0, QDir::homePath()));
+
     if (fileDialog.exec() == QDialog::Accepted) {
         auto fileUrl = QUrl(fileDialog.selectedUrls().constFirst());
 
@@ -179,10 +180,8 @@ void Editor::saveTranscript()
                 qInfo() << file->errorString();
                 return;
             }
-
             saveXml(file);
         }
-
     }
 }
 
@@ -199,7 +198,7 @@ void Editor::showBlocksFromData()
 void Editor::highlightTranscript(const QTime& elapsedTime)
 {
     qint64 blockToHighlight = -1;
-    // Check if we need to highlight different block
+
     if (!m_blocks.isEmpty()) {
         for (int i=0; i < m_blocks.size(); i++) {
             if (m_blocks[i].timeStamp > elapsedTime) {
@@ -373,7 +372,6 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
         delete m_highlighter;
     m_highlighter = new Highlighter(this->document());
 
-
     int currentBlockNumber = textCursor().blockNumber();
 
     if(m_blocks.size() != blockCount()) {
@@ -425,9 +423,9 @@ void Editor::splitLine(const QTime& elapsedTime)
     auto cutWordLeft = textBeforeCursor.split(" ").last();
     auto cutWordRight = textAfterCursor.split(" ").first();
     int wordNumber = textBeforeCursor.count(" ");
+
     if (m_blocks[highlightedBlock].speaker != "")
         wordNumber--;
-
     if (wordNumber < 0 || wordNumber >= m_blocks[highlightedBlock].words.size())
         return;
 
@@ -461,4 +459,52 @@ void Editor::splitLine(const QTime& elapsedTime)
     m_blocks[highlightedBlock].timeStamp = elapsedTime;
 
     setContent();
+}
+
+void Editor::mergeUp()
+{
+    auto blockNumber = textCursor().blockNumber();
+    auto previousBlockNumber = blockNumber - 1;
+
+    if (m_blocks.isEmpty() || blockNumber == 0 || m_blocks[blockNumber].speaker != m_blocks[previousBlockNumber].speaker)
+        return;
+
+    auto currentWords = m_blocks[blockNumber].words;
+
+    m_blocks[previousBlockNumber].words.append(currentWords);                 // Add current words to previous block
+    m_blocks[previousBlockNumber].timeStamp = m_blocks[blockNumber].timeStamp;  // Update time stamp of previous block
+    m_blocks[previousBlockNumber].text.append(" " + m_blocks[blockNumber].text);// Append text to previous block
+
+    m_blocks.removeAt(blockNumber);
+    setContent();
+
+    QTextCursor cursor(document()->findBlockByNumber(previousBlockNumber));
+    setTextCursor(cursor);
+    centerCursor();
+}
+
+void Editor::mergeDown()
+{
+    auto blockNumber = textCursor().blockNumber();
+    auto nextBlockNumber = blockNumber + 1;
+
+    if (m_blocks.isEmpty() || blockNumber == 0 || m_blocks[blockNumber].speaker != m_blocks[nextBlockNumber].speaker)
+        return;
+
+    auto currentWords = m_blocks[blockNumber].words;
+
+    auto temp = m_blocks[nextBlockNumber].words;
+    m_blocks[nextBlockNumber].words = currentWords;
+    m_blocks[nextBlockNumber].words.append(temp);
+
+    auto tempText = m_blocks[nextBlockNumber].text;
+    m_blocks[nextBlockNumber].text = m_blocks[blockNumber].text;
+    m_blocks[nextBlockNumber].text.append(" " + tempText);
+
+    m_blocks.removeAt(blockNumber);
+    setContent();
+
+    QTextCursor cursor(document()->findBlockByNumber(blockNumber));
+    setTextCursor(cursor);
+    centerCursor();
 }

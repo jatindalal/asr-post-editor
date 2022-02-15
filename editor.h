@@ -40,6 +40,8 @@ public slots:
     void highlightTranscript(const QTime& elapsedTime);
     void jumpToHighlightedLine();
     void splitLine(const QTime& elapsedTime);
+    void mergeUp();
+    void mergeDown();
 
 private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
