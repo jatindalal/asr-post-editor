@@ -488,7 +488,7 @@ void Editor::mergeDown()
     auto blockNumber = textCursor().blockNumber();
     auto nextBlockNumber = blockNumber + 1;
 
-    if (m_blocks.isEmpty() || blockNumber == 0 || m_blocks[blockNumber].speaker != m_blocks[nextBlockNumber].speaker)
+    if (m_blocks.isEmpty() || blockNumber == m_blocks.size() - 1 || m_blocks[blockNumber].speaker != m_blocks[nextBlockNumber].speaker)
         return;
 
     auto currentWords = m_blocks[blockNumber].words;
