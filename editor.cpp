@@ -477,7 +477,7 @@ void Editor::splitLine(const QTime& elapsedTime)
     auto cutWordRight = textAfterCursor.split(" ").first();
     int wordNumber = textBeforeCursor.count(" ");
 
-    if (m_blocks[highlightedBlock].speaker != "")
+    if (m_blocks[highlightedBlock].speaker != "" || blockText.contains("[]:"))
         wordNumber--;
     if (wordNumber < 0 || wordNumber >= m_blocks[highlightedBlock].words.size())
         return;
