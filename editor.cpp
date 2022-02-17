@@ -199,6 +199,7 @@ void Editor::showBlocksFromData()
 void Editor::highlightTranscript(const QTime& elapsedTime)
 {
     qint64 blockToHighlight = -1;
+    qint64 wordToHighlight = -1;
 
     if (!m_blocks.isEmpty()) {
         for (int i=0; i < m_blocks.size(); i++) {
@@ -214,6 +215,21 @@ void Editor::highlightTranscript(const QTime& elapsedTime)
         if (!m_highlighter)
             m_highlighter = new Highlighter(document());
         m_highlighter->setBlockToHighlight(blockToHighlight);
+    }
+
+    if (blockToHighlight == -1)
+        return;
+
+    for (int i = 0; i < m_blocks[blockToHighlight].words.size(); i++) {
+        if (m_blocks[blockToHighlight].words[i].timeStamp > elapsedTime) {
+            wordToHighlight = i;
+            break;
+        }
+    }
+
+    if (wordToHighlight != highlightedWord) {
+        highlightedWord = wordToHighlight;
+        m_highlighter->setWordToHighlight(wordToHighlight);
     }
 }
 
@@ -352,10 +368,28 @@ void Editor::helpJumpToPlayer()
     if (m_blocks[currentBlockNumber].timeStamp.isNull())
         return;
 
+    int positionInBlock = textCursor().positionInBlock();
+    auto blockText = textCursor().block().text();
+    auto textBeforeCursor = blockText.left(positionInBlock);
+    int wordNumber = textBeforeCursor.count(" ");
+    if (m_blocks[currentBlockNumber].speaker != "" || textCursor().block().text().contains("[]:"))
+        wordNumber--;
+
     for (int i = currentBlockNumber - 1; i >= 0; i--) {
         if (m_blocks[i].timeStamp.isValid()) {
             timeToJump = m_blocks[i].timeStamp;
             break;
+        }
+    }
+
+    // If we can jump to a word, then do so
+    if (wordNumber >= 0 && wordNumber < m_blocks[currentBlockNumber].words.size() && m_blocks[currentBlockNumber].words[wordNumber].timeStamp.isValid()) {
+        for (int i = wordNumber - 1; i >= 0; i--) {
+            if (m_blocks[currentBlockNumber].words[i].timeStamp.isValid()) {
+                timeToJump = m_blocks[currentBlockNumber].words[i].timeStamp;
+                emit jumpToPlayer(timeToJump);
+                return;
+            }
         }
     }
 

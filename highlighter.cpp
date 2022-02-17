@@ -16,20 +16,24 @@ void Highlighter::highlightBlock(const QString &text)
     if (blockToHighlight == -1)
         return;
     else if (currentBlock().blockNumber() == blockToHighlight) {
-        int speakerEnd = QRegularExpression("\\[[\\w\\.]*]:").match(text).capturedEnd();
+        int speakerEnd = 0;
+        auto speakerMatch = QRegularExpression("\\[[\\w\\.]*]:").match(text);
+        if (speakerMatch.hasMatch())
+            speakerEnd = speakerMatch.capturedEnd();
+
         int timeStampStart = QRegularExpression("\\[(\\d?\\d:)?[0-5]?\\d:[0-5]?\\d(\\.\\d\\d?\\d?)?]").match(text).capturedStart();
 
         setFormat(0, speakerEnd, speakerHighlightFormat);
         setFormat(speakerEnd, timeStampStart, blockHighlightFormat);
         setFormat(timeStampStart, text.size(), timeStampHighlightFormat);
 
-        auto words = text.split(" ");
+        auto words = text.mid(speakerEnd + 1).split(" ");
 
         if (wordToHighlight != -1 && wordToHighlight < words.size()) {
-            int start{0};
+            int start = speakerEnd;
             for (int i=0; i < wordToHighlight; i++) start += (words[i].size() + 1);
             int count = words[wordToHighlight].size();
-            setFormat(start, count, wordHighlightFormat);
+            setFormat(start + 1, count, wordHighlightFormat);
         }
     }
 }

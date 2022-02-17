@@ -63,7 +63,7 @@ private:
     QFile *m_file = nullptr;
     QList<block> m_blocks;
     Highlighter *m_highlighter = nullptr;
-    qint64 highlightedBlock = -1;
+    qint64 highlightedBlock = -1, highlightedWord = -1;
 };
 
 
