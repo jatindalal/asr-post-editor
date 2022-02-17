@@ -106,7 +106,8 @@ void Editor::lineNumberAreaPaintEvent(QPaintEvent *event)
 void Editor::mousePressEvent(QMouseEvent *e)
 {
     QPlainTextEdit::mousePressEvent(e);
-    emit editorMouseClicked();
+    if (e->modifiers() == Qt::ControlModifier && !m_blocks.isEmpty())
+        helpJumpToPlayer();
 }
 
 void Editor::open()
@@ -341,6 +342,24 @@ void Editor::saveXml(QFile* file)
     writer.writeEndElement();
     file->close();
     delete file;
+}
+
+void Editor::helpJumpToPlayer()
+{
+    auto currentBlockNumber = textCursor().blockNumber();
+    auto timeToJump = QTime(0, 0);
+
+    if (m_blocks[currentBlockNumber].timeStamp.isNull())
+        return;
+
+    for (int i = currentBlockNumber - 1; i >= 0; i--) {
+        if (m_blocks[i].timeStamp.isValid()) {
+            timeToJump = m_blocks[i].timeStamp;
+            break;
+        }
+    }
+
+    emit jumpToPlayer(timeToJump);
 }
 
 void Editor::setContent()

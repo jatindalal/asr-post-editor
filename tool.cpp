@@ -1,8 +1,6 @@
 #include "tool.h"
 #include "./ui_tool.h"
 
-#include <QDebug>
-
 #include "mediaplayer.h"
 
 tool::tool(QWidget *parent)
@@ -22,7 +20,8 @@ tool::tool(QWidget *parent)
     connect(ui->player_togglePlay,
             &QAction::triggered,
             player,
-            [=]() { if (player->state() == MediaPlayer::PausedState)
+            [=]() {
+                    if (player->state() == MediaPlayer::PausedState || player->state() == MediaPlayer::StoppedState)
                         player->play();
                     else if (player->state() == MediaPlayer::PlayingState)
                         player->pause();
@@ -57,6 +56,7 @@ tool::tool(QWidget *parent)
     connect(ui->editor_mergeUp, &QAction::triggered, ui->m_editor, &Editor::mergeUp);
     connect(ui->editor_mergeDown, &QAction::triggered, ui->m_editor, &Editor::mergeDown);
     connect(ui->m_editor, &Editor::message, this->statusBar(), &QStatusBar::showMessage);
+    connect(ui->m_editor, &Editor::jumpToPlayer, player, &MediaPlayer::setPositionToTime);
 
     // Connect Player elapsed time to highlight Editor
     connect(player, &MediaPlayer::positionChanged, ui->m_editor, [=]() {ui->m_editor->highlightTranscript(player->elapsedTime());});
@@ -79,3 +79,24 @@ void tool::handleMediaPlayerError()
     statusBar()->showMessage(message);
 }
 
+void tool::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Space && event->modifiers() == Qt::ControlModifier) {
+        if (player->state() == MediaPlayer::PausedState || player->state() == MediaPlayer::StoppedState)
+            player->play();
+        else if (player->state() == MediaPlayer::PlayingState)
+            player->pause();
+    }
+    else if (event->key() == Qt::Key_Period && event->modifiers() == Qt::ControlModifier)
+        player->seek(5);
+    else if (event->key() == Qt::Key_Comma && event->modifiers() == Qt::ControlModifier)
+        player->seek(-5);
+    else if (event->key() == Qt::Key_Semicolon && event->modifiers() == Qt::ControlModifier)
+        ui->m_editor->splitLine(player->elapsedTime());
+    else if (event->key() == Qt::Key_J && event->modifiers() == Qt::ControlModifier)
+        ui->m_editor->jumpToHighlightedLine();
+    else if (event->key() == Qt::Key_S && event->modifiers() == Qt::ControlModifier)
+        ui->m_editor->saveTranscript();
+    else
+        QMainWindow::keyPressEvent(event);
+}

@@ -29,7 +29,7 @@ protected:
     void mousePressEvent(QMouseEvent *e) override;
 
 signals:
-    void editorMouseClicked();
+    void jumpToPlayer(const QTime& time);
     void message(const QString& text, int timeout = 5000);
 
 public slots:
@@ -56,6 +56,7 @@ private:
     void loadTranscriptData(QFile* file);
     void setContent();
     void saveXml(QFile* file);
+    void helpJumpToPlayer();
 
     bool settingContent{false};
     QWidget *lineNumberArea;

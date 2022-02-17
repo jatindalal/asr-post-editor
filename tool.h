@@ -16,6 +16,9 @@ public:
     tool(QWidget *parent = nullptr);
     ~tool();
 
+protected:
+    void keyPressEvent(QKeyEvent *event);
+
 private slots:
     void handleMediaPlayerError();
 

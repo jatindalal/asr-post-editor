@@ -45,7 +45,7 @@ PlayerControls::PlayerControls(QWidget *parent)
     m_positionSlider = new QSlider(Qt::Horizontal, this);
     m_positionSlider->setRange(0, 0);
 
-    connect(m_positionSlider, &QSlider::sliderMoved, this, &PlayerControls::onPositionSliderMoved);
+    connect(m_positionSlider, &QSlider::valueChanged, this, &PlayerControls::onPositionSliderMoved);
 
     m_positionLabel = new QLabel(this);
     m_positionLabel->setText("00:00 / 00:00");

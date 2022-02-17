@@ -17,6 +17,8 @@ QTime MediaPlayer::durationTime()
 
 void MediaPlayer::setPositionToTime(const QTime& time)
 {
+    if (time.isNull())
+        return;
     qint64 position = 3600000*time.hour() + 60000*time.minute() + 1000*time.second() + time.msec();
     setPosition(position);
 }
@@ -55,7 +57,7 @@ void MediaPlayer::seek(int seconds)
 {
     if (elapsedTime().addSecs(seconds) > durationTime())
         setPosition(duration());
-    else if (!elapsedTime().addSecs(seconds).isValid())
+    else if (elapsedTime().addSecs(seconds).isNull())
         setPosition(0);
     else
         setPositionToTime(elapsedTime().addSecs(seconds));
