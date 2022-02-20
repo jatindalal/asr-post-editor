@@ -161,6 +161,17 @@ void Editor::openTranscript()
         loadTranscriptData(m_file);
         setContent();
 
+        if (m_highlighter)
+            delete m_highlighter;
+        m_highlighter = new Highlighter(document());
+
+        QList<int> invalidBlocks;
+        for (int i = 0; i < m_blocks.size(); i++)
+            if (m_blocks[i].timeStamp.isNull())
+                invalidBlocks.append(i);
+
+        m_highlighter->setInvalidBlocks(invalidBlocks);
+
         emit message("Opened transcript " + fileUrl->fileName());
     }
 }
@@ -453,6 +464,13 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
         m_blocks.replace(currentBlockNumber, fromEditor(currentBlockNumber)); // TODO can be implemented here
 
     m_highlighter->setBlockToHighlight(highlightedBlock);
+    m_highlighter->setWordToHighlight(highlightedWord);
+
+    QList<int> invalidBlocks;
+    for (int i = 0; i < m_blocks.size(); i++)
+        if (m_blocks[i].timeStamp.isNull())
+            invalidBlocks.append(i);
+    m_highlighter->setInvalidBlocks(invalidBlocks);
 }
 
 void Editor::jumpToHighlightedLine()

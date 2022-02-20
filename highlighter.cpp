@@ -9,10 +9,15 @@ Highlighter::Highlighter(QTextDocument *parent)
     wordHighlightFormat.setBackground(Qt::yellow);
     timeStampHighlightFormat.setForeground(Qt::red);
     speakerHighlightFormat.setForeground(QColor(Qt::blue).lighter(120));
+    invalidBlockHighlightFormat.setForeground(QColor(Qt::red).lighter(120));
 }
 
 void Highlighter::highlightBlock(const QString &text)
 {
+    if (invalidBlockNumbers.contains(currentBlock().blockNumber())) {
+        setFormat(0, text.size(), invalidBlockHighlightFormat);
+        return;
+    }
     if (blockToHighlight == -1)
         return;
     else if (currentBlock().blockNumber() == blockToHighlight) {
@@ -55,3 +60,4 @@ void Highlighter::setWordToHighlight(int wordNumber)
     wordToHighlight = wordNumber;
     rehighlight();
 }
+

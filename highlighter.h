@@ -13,12 +13,23 @@ public:
     void setBlockToHighlight(qint64 blockNumber);
     void setWordToHighlight(int wordNumber);
 
+    void setInvalidBlocks(const QList<int> invalidBlocks)
+    {
+        invalidBlockNumbers = invalidBlocks;
+        rehighlight();
+    }
+    void clearInvalidBlocks()
+    {
+        invalidBlockNumbers.clear();
+    }
+
 protected:
     void highlightBlock(const QString &text) override;
 
 private:
     int blockToHighlight{-1};
     int wordToHighlight{-1};
-    QTextCharFormat blockHighlightFormat, wordHighlightFormat, timeStampHighlightFormat, speakerHighlightFormat;
+    QList<int> invalidBlockNumbers;
+    QTextCharFormat blockHighlightFormat, wordHighlightFormat, timeStampHighlightFormat, speakerHighlightFormat, invalidBlockHighlightFormat;
 };
 
