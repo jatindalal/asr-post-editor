@@ -1,4 +1,5 @@
 #include "editor.h"
+#include "findreplacedialog.h"
 
 #include <QPainter>
 #include <QTextBlock>
@@ -103,41 +104,18 @@ void Editor::lineNumberAreaPaintEvent(QPaintEvent *event)
     }
 }
 
+void Editor::findReplace()
+{
+    auto findReplace = new FindReplaceDialog(this);
+    findReplace->setAttribute(Qt::WA_DeleteOnClose);
+    findReplace->show();
+}
+
 void Editor::mousePressEvent(QMouseEvent *e)
 {
     QPlainTextEdit::mousePressEvent(e);
     if (e->modifiers() == Qt::ControlModifier && !m_blocks.isEmpty())
         helpJumpToPlayer();
-}
-
-void Editor::open()
-{
-    QFileDialog fileDialog(this);
-    fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
-    fileDialog.setWindowTitle(tr("Open File"));
-    fileDialog.setDirectory(QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation).value(0, QDir::homePath()));
-
-    if (fileDialog.exec() == QDialog::Accepted) {
-        QUrl *fileUrl = new QUrl(fileDialog.selectedUrls().constFirst());
-        if (m_file)
-            delete m_file;
-        m_file = new QFile(fileUrl->toLocalFile());
-
-        if (!m_file->open(QIODevice::ReadOnly)) {
-            emit message(m_file->errorString());
-            return;
-        }
-
-        QString content = m_file->readAll();
-
-        if (!settingContent) {
-            settingContent = true;
-            setPlainText(content);
-            settingContent = false;
-        }
-        emit message("Opened file " + fileUrl->fileName());
-    }
-
 }
 
 void Editor::openTranscript()
@@ -160,17 +138,6 @@ void Editor::openTranscript()
 
         loadTranscriptData(m_file);
         setContent();
-
-        if (m_highlighter)
-            delete m_highlighter;
-        m_highlighter = new Highlighter(document());
-
-        QList<int> invalidBlocks;
-        for (int i = 0; i < m_blocks.size(); i++)
-            if (m_blocks[i].timeStamp.isNull())
-                invalidBlocks.append(i);
-
-        m_highlighter->setInvalidBlocks(invalidBlocks);
 
         emit message("Opened transcript " + fileUrl->fileName());
     }
@@ -270,7 +237,7 @@ Editor::block Editor::fromEditor(qint64 blockNumber)
     QList<word> words;
     QString text, speaker, blockText(document()->findBlockByNumber(blockNumber).text());
 
-    QRegularExpression timeStampExp("\\[(\\d?\\d:)?[0-5]?\\d:[0-5]?\\d(\\.\\d\\d?\\d?)?]");
+    QRegularExpression timeStampExp(R"(\[(\d?\d:)?[0-5]?\d:[0-5]?\d(\.\d\d?\d?)?])");
     QRegularExpressionMatch match = timeStampExp.match(blockText);
     if (match.hasMatch()) {
         QString matchedTimeStampString = match.captured();
@@ -280,7 +247,7 @@ Editor::block Editor::fromEditor(qint64 blockNumber)
         }
     }
 
-    QRegularExpression speakerExp("\\[[\\w\\.]*]:");
+    QRegularExpression speakerExp(R"(\[[\w\.]*]:)");
     match = speakerExp.match(blockText);
     if (match.hasMatch()) {
         speaker = match.captured();
@@ -411,12 +378,25 @@ void Editor::setContent()
 {
     if (!settingContent) {
         settingContent = true;
+
+        if (m_highlighter)
+            delete m_highlighter;
+
         QString content("");
         for (auto& block: qAsConst(m_blocks)) {
             auto blockText = "[" + block.speaker + "]: " + block.text + " [" + block.timeStamp.toString("hh:mm:ss.zzz") + "]";
             content.append(blockText + "\n");
         }
         setPlainText(content.trimmed());
+
+        m_highlighter = new Highlighter(document());
+
+        QList<int> invalidBlocks;
+        for (int i = 0; i < m_blocks.size(); i++)
+            if (m_blocks[i].timeStamp.isNull())
+                invalidBlocks.append(i);
+        m_highlighter->setInvalidBlocks(invalidBlocks);
+
         settingContent = false;
     }
 }

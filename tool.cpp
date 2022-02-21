@@ -47,7 +47,6 @@ tool::tool(QWidget *parent)
     connect(player, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error), this, &tool::handleMediaPlayerError);
 
     // Connect Editor controls
-    connect(ui->editor_open, &QAction::triggered, ui->m_editor, &Editor::open);
     connect(ui->editor_openTranscript, &QAction::triggered, ui->m_editor, &Editor::openTranscript);
     connect(ui->editor_debugBlocks, &QAction::triggered, ui->m_editor, &Editor::showBlocksFromData);
     connect(ui->editor_save, &QAction::triggered, ui->m_editor, &Editor::saveTranscript);
@@ -97,6 +96,8 @@ void tool::keyPressEvent(QKeyEvent *event)
         ui->m_editor->jumpToHighlightedLine();
     else if (event->key() == Qt::Key_S && event->modifiers() == Qt::ControlModifier)
         ui->m_editor->saveTranscript();
+    else if (event->key() == Qt::Key_F && event->modifiers() == Qt::ControlModifier)
+        ui->m_editor->findReplace();
     else
         QMainWindow::keyPressEvent(event);
 }

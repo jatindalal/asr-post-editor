@@ -20,9 +20,11 @@ class Editor : public QPlainTextEdit
     struct block;
 
 public:
-    Editor(QWidget *parent = nullptr);
+    explicit Editor(QWidget *parent = nullptr);
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
+
+    void findReplace();
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -33,7 +35,6 @@ signals:
     void message(const QString& text, int timeout = 5000);
 
 public slots:
-    void open();
     void openTranscript();
     void saveTranscript();
     void showBlocksFromData();

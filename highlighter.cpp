@@ -22,11 +22,11 @@ void Highlighter::highlightBlock(const QString &text)
         return;
     else if (currentBlock().blockNumber() == blockToHighlight) {
         int speakerEnd = 0;
-        auto speakerMatch = QRegularExpression("\\[[\\w\\.]*]:").match(text);
+        auto speakerMatch = QRegularExpression(R"(\[[\w\.]*]:)").match(text);
         if (speakerMatch.hasMatch())
             speakerEnd = speakerMatch.capturedEnd();
 
-        int timeStampStart = QRegularExpression("\\[(\\d?\\d:)?[0-5]?\\d:[0-5]?\\d(\\.\\d\\d?\\d?)?]").match(text).capturedStart();
+        int timeStampStart = QRegularExpression(R"(\[(\d?\d:)?[0-5]?\d:[0-5]?\d(\.\d\d?\d?)?])").match(text).capturedStart();
 
         setFormat(0, speakerEnd, speakerHighlightFormat);
         setFormat(speakerEnd, timeStampStart, blockHighlightFormat);
