@@ -85,6 +85,10 @@ void Tool::keyPressEvent(QKeyEvent *event)
         ui->m_editor->saveTranscript();
     else if (event->key() == Qt::Key_F && event->modifiers() == Qt::ControlModifier)
         ui->m_editor->findReplace();
+    else if (event->key() == Qt::Key_Up && event->modifiers() == Qt::ControlModifier)
+        ui->m_editor->mergeUp();
+    else if (event->key() == Qt::Key_Down && event->modifiers() == Qt::ControlModifier)
+        ui->m_editor->mergeDown();
     else
         QMainWindow::keyPressEvent(event);
 }

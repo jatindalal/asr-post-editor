@@ -44,7 +44,7 @@ private slots:
     void muteClicked();
     void updateRate();
     void onVolumeSliderValueChanged();
-    void onPositionSliderMoved(int position);
+    void onPositionSliderMoved();
 
 private:
     QMediaPlayer::State m_playerState = QMediaPlayer::StoppedState;
