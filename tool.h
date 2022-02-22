@@ -5,19 +5,19 @@
 
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class tool; }
+namespace Ui { class Tool; }
 QT_END_NAMESPACE
 
-class tool : public QMainWindow
+class Tool : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    tool(QWidget *parent = nullptr);
-    ~tool();
+    explicit Tool(QWidget *parent = nullptr);
+    ~Tool();
 
 protected:
-    void keyPressEvent(QKeyEvent *event);
+    void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
     void handleMediaPlayerError();
@@ -25,5 +25,5 @@ private slots:
 private:
 
     MediaPlayer *player = nullptr;
-    Ui::tool *ui;
+    Ui::Tool *ui;
 };

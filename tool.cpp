@@ -3,9 +3,9 @@
 
 #include "mediaplayer.h"
 
-tool::tool(QWidget *parent)
+Tool::Tool(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::tool)
+    , ui(new Ui::Tool)
 {
     ui->setupUi(this);
     ui->m_playerControls->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
@@ -44,7 +44,7 @@ tool::tool(QWidget *parent)
     connect(ui->m_playerControls, &PlayerControls::changePosition, player, &MediaPlayer::setPosition);
     connect(player, &MediaPlayer::positionChanged, ui->m_playerControls, [=]() {ui->m_playerControls->setPositionInfo(player->getPositionInfo());});
     connect(player, &MediaPlayer::message, this->statusBar(), &QStatusBar::showMessage);
-    connect(player, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error), this, &tool::handleMediaPlayerError);
+    connect(player, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error), this, &Tool::handleMediaPlayerError);
 
     // Connect Editor controls
     connect(ui->editor_openTranscript, &QAction::triggered, ui->m_editor, &Editor::openTranscript);
@@ -61,13 +61,13 @@ tool::tool(QWidget *parent)
     connect(player, &MediaPlayer::positionChanged, ui->m_editor, [=]() {ui->m_editor->highlightTranscript(player->elapsedTime());});
 }
 
-tool::~tool()
+Tool::~Tool()
 {
     delete player;
     delete ui;
 }
 
-void tool::handleMediaPlayerError()
+void Tool::handleMediaPlayerError()
 {
     const QString errorString = player->errorString();
     QString message = "Error: ";
@@ -78,7 +78,7 @@ void tool::handleMediaPlayerError()
     statusBar()->showMessage(message);
 }
 
-void tool::keyPressEvent(QKeyEvent *event)
+void Tool::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Space && event->modifiers() == Qt::ControlModifier) {
         if (player->state() == MediaPlayer::PausedState || player->state() == MediaPlayer::StoppedState)
