@@ -20,6 +20,7 @@ public:
 public slots:
     void open();
     void seek(int seconds);
+    void togglePlayback();
 
 signals:
     void message(QString text, int timeout = 5000);

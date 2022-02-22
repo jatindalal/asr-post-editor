@@ -72,3 +72,11 @@ QTime MediaPlayer::getTimeFromPosition(const qint64& position)
 
     return QTime(hours, minutes, seconds, milliseconds);
 }
+
+void MediaPlayer::togglePlayback()
+{
+    if (state() == MediaPlayer::PausedState || state() == MediaPlayer::StoppedState)
+        play();
+    else if (state() == MediaPlayer::PlayingState)
+        pause();
+}

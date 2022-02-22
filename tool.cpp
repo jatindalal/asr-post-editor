@@ -17,16 +17,7 @@ Tool::Tool(QWidget *parent)
 
     // Connect Player Controls and Media Player
     connect(ui->player_open, &QAction::triggered, player, &MediaPlayer::open);
-    connect(ui->player_togglePlay,
-            &QAction::triggered,
-            player,
-            [=]() {
-                    if (player->state() == MediaPlayer::PausedState || player->state() == MediaPlayer::StoppedState)
-                        player->play();
-                    else if (player->state() == MediaPlayer::PlayingState)
-                        player->pause();
-                  }
-            );
+    connect(ui->player_togglePlay, &QAction::triggered, player, &MediaPlayer::togglePlayback);
     connect(ui->m_playerControls, &PlayerControls::play, player, &QMediaPlayer::play);
     connect(ui->m_playerControls, &PlayerControls::pause, player, &QMediaPlayer::pause);
     connect(ui->m_playerControls, &PlayerControls::stop, player, &QMediaPlayer::stop);
@@ -80,12 +71,8 @@ void Tool::handleMediaPlayerError()
 
 void Tool::keyPressEvent(QKeyEvent *event)
 {
-    if (event->key() == Qt::Key_Space && event->modifiers() == Qt::ControlModifier) {
-        if (player->state() == MediaPlayer::PausedState || player->state() == MediaPlayer::StoppedState)
-            player->play();
-        else if (player->state() == MediaPlayer::PlayingState)
-            player->pause();
-    }
+    if (event->key() == Qt::Key_Space && event->modifiers() == Qt::ControlModifier)
+        player->togglePlayback();
     else if (event->key() == Qt::Key_Period && event->modifiers() == Qt::ControlModifier)
         player->seek(5);
     else if (event->key() == Qt::Key_Comma && event->modifiers() == Qt::ControlModifier)
