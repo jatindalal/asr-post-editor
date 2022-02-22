@@ -190,7 +190,13 @@ void PlayerControls::setPositionSliderDuration(qint64 duration)
 
 void PlayerControls::setPositionSliderPosition(qint64 position)
 {
+    // we need to surpress valueChanged signal or else this will end in a loop
+    // where player calls this function as it makes progress it this function
+    // emits value changed signal that sets player position, round and round
+    // it will go.
+    m_positionSlider->blockSignals(true);
     m_positionSlider->setValue(position);
+    m_positionSlider->blockSignals(false);
 }
 
 void PlayerControls::updateRate()
