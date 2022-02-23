@@ -5,11 +5,13 @@
 #include <QTextBlock>
 #include <QFileDialog>
 #include <QStandardPaths>
-#include <QRegularExpression>
 
 Editor::Editor(QWidget *parent) : QPlainTextEdit(parent)
 {
     lineNumberArea = new LineNumberArea(this);
+
+    timeStampExp = QRegularExpression(R"(\[(\d?\d:)?[0-5]?\d:[0-5]?\d(\.\d\d?\d?)?])");
+    speakerExp = QRegularExpression(R"(\[[\w\.]*]:)");
 
     connect(this, &Editor::blockCountChanged, this, &Editor::updateLineNumberAreaWidth);
     connect(this, &Editor::updateRequest, this, &Editor::updateLineNumberArea);
@@ -237,7 +239,6 @@ Editor::block Editor::fromEditor(qint64 blockNumber)
     QList<word> words;
     QString text, speaker, blockText(document()->findBlockByNumber(blockNumber).text());
 
-    QRegularExpression timeStampExp(R"(\[(\d?\d:)?[0-5]?\d:[0-5]?\d(\.\d\d?\d?)?])");
     QRegularExpressionMatch match = timeStampExp.match(blockText);
     if (match.hasMatch()) {
         QString matchedTimeStampString = match.captured();
@@ -247,7 +248,6 @@ Editor::block Editor::fromEditor(qint64 blockNumber)
         }
     }
 
-    QRegularExpression speakerExp(R"(\[[\w\.]*]:)");
     match = speakerExp.match(blockText);
     if (match.hasMatch()) {
         speaker = match.captured();
@@ -425,10 +425,8 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
                 m_blocks.removeAt(currentBlockNumber + 1);
         }
         else { // Blocks added
-            if (!(m_blocks[currentBlockNumber + blocksChanged] == fromEditor(currentBlockNumber + blocksChanged)))
-                m_blocks.replace(currentBlockNumber + blocksChanged, fromEditor(currentBlockNumber + blocksChanged));
             for (int i = 1; i <= -blocksChanged; i++) {
-                if (currentBlockNumber == 1)
+                if (document()->findBlockByNumber(currentBlockNumber + blocksChanged).text().trimmed() == "")
                     m_blocks.insert(currentBlockNumber + blocksChanged, fromEditor(currentBlockNumber - i));
                 else
                     m_blocks.insert(currentBlockNumber + blocksChanged + 1, fromEditor(currentBlockNumber - i + 1));
@@ -437,11 +435,14 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
     }
     // If current block's text is changed then replace it with new data
     // TODO: If text of some word is changed or new word is added then only that should have invalid timestamp
-    auto blockText = "[" + m_blocks[currentBlockNumber].speaker + "]: " +
-                      m_blocks[currentBlockNumber].text +
-                     " [" + m_blocks[currentBlockNumber].timeStamp.toString("hh:mm:ss.zzz") + "]";
-    if (textCursor().block().text().trimmed() != blockText)
-        m_blocks.replace(currentBlockNumber, fromEditor(currentBlockNumber)); // TODO can be implemented here
+    auto currentBlockFromEditor = fromEditor(currentBlockNumber);
+    auto& currentBlockFromData = m_blocks[currentBlockNumber];
+    if (currentBlockFromData.speaker != currentBlockFromEditor.speaker)
+        currentBlockFromData.speaker = currentBlockFromEditor.speaker;
+    else if (currentBlockFromData.timeStamp != currentBlockFromEditor.timeStamp)
+        currentBlockFromData.timeStamp = currentBlockFromEditor.timeStamp;
+    else if( currentBlockFromData.text != currentBlockFromEditor.text)
+        currentBlockFromData = currentBlockFromEditor;
 
     m_highlighter->setBlockToHighlight(highlightedBlock);
     m_highlighter->setWordToHighlight(highlightedWord);

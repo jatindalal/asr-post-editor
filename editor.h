@@ -7,6 +7,7 @@
 #include <QWidget>
 #include <QTime>
 #include <QXmlStreamReader>
+#include <QRegularExpression>
 
 #include "highlighter.h"
 
@@ -24,6 +25,7 @@ public:
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
 
+    QRegularExpression timeStampExp, speakerExp;
     void findReplace();
 
 protected:

@@ -20,7 +20,7 @@
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="playerLayout">
         <item>
          <widget class="VideoWidget" name="m_videoWidget" native="true"/>
@@ -79,7 +79,6 @@
     <property name="title">
      <string>Editor</string>
     </property>
-    <addaction name="editor_open"/>
     <addaction name="editor_openTranscript"/>
     <addaction name="editor_save"/>
     <addaction name="editor_debugBlocks"/>
