@@ -42,14 +42,6 @@ PlayerControls::PlayerControls(QWidget *parent)
 
     connect(m_volumeSlider, &QSlider::valueChanged, this, &PlayerControls::onVolumeSliderValueChanged);
 
-    m_positionSlider = new QSlider(Qt::Horizontal, this);
-    m_positionSlider->setRange(0, 0);
-
-    connect(m_positionSlider, &QSlider::sliderMoved, this, &PlayerControls::onPositionSliderMoved);
-
-    m_positionLabel = new QLabel(this);
-    m_positionLabel->setText("00:00 / 00:00");
-
     m_rateBox = new QComboBox(this);
     m_rateBox->addItem("0.5x", QVariant(0.5));
     m_rateBox->addItem("1.0x", QVariant(1.0));
@@ -59,25 +51,16 @@ PlayerControls::PlayerControls(QWidget *parent)
 
     connect(m_rateBox, QOverload<int>::of(&QComboBox::activated), this, &PlayerControls::updateRate);
 
-    QBoxLayout *positionLayout = new QHBoxLayout;
-    positionLayout->setContentsMargins(0, 0, 0, 0);
-    positionLayout->addWidget(m_positionSlider);
-    positionLayout->addWidget(m_positionLabel);
-
-    QBoxLayout *controlLayout = new QHBoxLayout;
-    controlLayout->setContentsMargins(0, 0, 0, 0);
-    controlLayout->addWidget(m_stopButton);
-    controlLayout->addWidget(m_seekBackwardButton);
-    controlLayout->addWidget(m_playButton);
-    controlLayout->addWidget(m_seekForwardButton);
-    controlLayout->addWidget(m_muteButton);
-    controlLayout->addWidget(m_volumeSlider);
-    controlLayout->addWidget(m_rateBox);
-
-    QBoxLayout *layout = new QVBoxLayout;
+    QBoxLayout *layout = new QHBoxLayout;
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addLayout(positionLayout);
-    layout->addLayout(controlLayout);
+    layout->addWidget(m_stopButton);
+    layout->addWidget(m_seekBackwardButton);
+    layout->addWidget(m_playButton);
+    layout->addWidget(m_seekForwardButton);
+    layout->addWidget(m_muteButton);
+    layout->addWidget(m_volumeSlider);
+    layout->addWidget(m_rateBox);
+
     setLayout(layout);
 }
 
@@ -178,21 +161,6 @@ void PlayerControls::setPlaybackRate(float rate)
     m_rateBox->setCurrentIndex(m_rateBox->count() - 1);
 }
 
-void PlayerControls::setPositionInfo(QString info)
-{
-    m_positionLabel->setText(info);
-}
-
-void PlayerControls::setPositionSliderDuration(qint64 duration)
-{
-    m_positionSlider->setRange(0, duration);
-}
-
-void PlayerControls::setPositionSliderPosition(qint64 position)
-{
-    m_positionSlider->setValue(position);
-}
-
 void PlayerControls::updateRate()
 {
     emit changeRate(playbackRate());
@@ -201,9 +169,4 @@ void PlayerControls::updateRate()
 void PlayerControls::onVolumeSliderValueChanged()
 {
     emit changeVolume(volume());
-}
-
-void PlayerControls::onPositionSliderMoved()
-{
-    emit changePosition(m_positionSlider->value());
 }

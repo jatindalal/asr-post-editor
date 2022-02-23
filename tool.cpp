@@ -30,12 +30,26 @@ Tool::Tool(QWidget *parent)
     connect(player, &QMediaPlayer::stateChanged, ui->m_playerControls, &PlayerControls::setState);
     connect(player, &QMediaPlayer::volumeChanged, ui->m_playerControls, &PlayerControls::setVolume);
     connect(player, &QMediaPlayer::mutedChanged, ui->m_playerControls, &PlayerControls::setMuted);
-    connect(player, &MediaPlayer::positionChanged, ui->m_playerControls, &PlayerControls::setPositionSliderPosition);
-    connect(player, &MediaPlayer::durationChanged, ui->m_playerControls, &PlayerControls::setPositionSliderDuration);
-    connect(ui->m_playerControls, &PlayerControls::changePosition, player, &MediaPlayer::setPosition);
-    connect(player, &MediaPlayer::positionChanged, ui->m_playerControls, [=]() {ui->m_playerControls->setPositionInfo(player->getPositionInfo());});
     connect(player, &MediaPlayer::message, this->statusBar(), &QStatusBar::showMessage);
     connect(player, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error), this, &Tool::handleMediaPlayerError);
+
+    // Connect components dependent on Player's position change to player
+    connect(player, &QMediaPlayer::positionChanged, this,
+        [=]()
+        {
+            ui->slider_position->setValue(player->position());
+            ui->label_position->setText(player->getPositionInfo());
+            ui->m_editor->highlightTranscript(player->elapsedTime());
+        }
+    );
+
+    connect(player, &QMediaPlayer::durationChanged, this,
+        [=]()
+        {
+            ui->slider_position->setRange(0, player->duration());
+            ui->label_position->setText(player->getPositionInfo());
+        }
+    );
 
     // Connect Editor controls
     connect(ui->editor_openTranscript, &QAction::triggered, ui->m_editor, &Editor::openTranscript);
@@ -48,8 +62,8 @@ Tool::Tool(QWidget *parent)
     connect(ui->m_editor, &Editor::message, this->statusBar(), &QStatusBar::showMessage);
     connect(ui->m_editor, &Editor::jumpToPlayer, player, &MediaPlayer::setPositionToTime);
 
-    // Connect Player elapsed time to highlight Editor
-    connect(player, &MediaPlayer::positionChanged, ui->m_editor, [=]() {ui->m_editor->highlightTranscript(player->elapsedTime());});
+    // Connect position slider change to player position
+    connect(ui->slider_position, &QSlider::sliderMoved, player, [=](){player->setPosition(ui->slider_position->value());});
 }
 
 Tool::~Tool()

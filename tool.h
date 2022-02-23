@@ -23,7 +23,6 @@ private slots:
     void handleMediaPlayerError();
 
 private:
-
     MediaPlayer *player = nullptr;
     Ui::Tool *ui;
 };
