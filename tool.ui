@@ -86,6 +86,7 @@
     <addaction name="editor_splitLine"/>
     <addaction name="editor_mergeUp"/>
     <addaction name="editor_mergeDown"/>
+    <addaction name="editor_findReplace"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuMedia_Player"/>
@@ -145,6 +146,11 @@
   <action name="editor_mergeDown">
    <property name="text">
     <string>Merge Down</string>
+   </property>
+  </action>
+  <action name="editor_findReplace">
+   <property name="text">
+    <string>Find Replace</string>
    </property>
   </action>
  </widget>

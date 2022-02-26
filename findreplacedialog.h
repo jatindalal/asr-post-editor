@@ -1,8 +1,7 @@
 #pragma once
 
 #include <QDialog>
-
-#include "editor.h"
+#include <QPlainTextEdit>
 
 namespace Ui {
     class FindReplaceDialog;
@@ -12,7 +11,7 @@ class FindReplaceDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit FindReplaceDialog(Editor *parentEditor);
+    explicit FindReplaceDialog(QPlainTextEdit *parentEditor);
     ~FindReplaceDialog();
 
 private slots:
@@ -21,9 +20,11 @@ private slots:
     void findNext();
     void replace();
     void replaceAll();
+signals:
+    void message(const QString& text, int timeout = 2000);
 
 private:
-    Editor *m_Editor = nullptr;
+    QPlainTextEdit *m_Editor = nullptr;
     Ui::FindReplaceDialog *ui;
     QTextDocument::FindFlags flags;
 };

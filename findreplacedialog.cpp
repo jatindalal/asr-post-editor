@@ -1,7 +1,7 @@
 #include "findreplacedialog.h"
 #include "ui_findreplacedialog.h"
 
-FindReplaceDialog::FindReplaceDialog(Editor *parentEditor)
+FindReplaceDialog::FindReplaceDialog(QPlainTextEdit *parentEditor)
     : QDialog (parentEditor),
       m_Editor(parentEditor),
       ui (new Ui::FindReplaceDialog)
@@ -45,19 +45,28 @@ void FindReplaceDialog::findNext()
 {
     QString query = ui->text_find->text();
     m_Editor->find(query, flags);
+    if (m_Editor->textCursor().hasSelection() && m_Editor->textCursor().selectedText() == query)
+        emit message("Found word " + query + ".");
 }
 
 void FindReplaceDialog::findPrevious()
 {
     QString query = ui->text_find->text();
     m_Editor->find(query, QTextDocument::FindBackward | flags);
+    if (m_Editor->textCursor().hasSelection() && m_Editor->textCursor().selectedText() == query)
+        emit message("Found word " + query + ".");
 }
 
 void FindReplaceDialog::replace()
 {
     QString replacementString = ui->text_replace->text();
-    if (replacementString != "" && m_Editor->textCursor().hasSelection())
+    if (!m_Editor->textCursor().hasSelection())
+        emit message("No selected words");
+    else if (replacementString != "" && m_Editor->textCursor().selectedText() == ui->text_find->text())
+    {
         m_Editor->textCursor().insertText(replacementString);
+        emit message("Replced " + ui->text_find->text() + " with " + replacementString + ".");
+    }
 }
 
 void FindReplaceDialog::replaceAll()
@@ -68,9 +77,12 @@ void FindReplaceDialog::replaceAll()
 
     QString query = ui->text_find->text();
     QString replacementString = ui->text_replace->text();
+    short replacementCount{0};
 
-    while (m_Editor->find(query, flags))
+    while (m_Editor->find(query, flags)) {
         m_Editor->textCursor().insertText(replacementString);
+        ++replacementCount;
+    }
 
-    ui->text_find->setText(replacementString);
+    emit message("Replaced " + QString::number(replacementCount) + " occurences.");
 }

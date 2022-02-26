@@ -1,5 +1,4 @@
 #include "editor.h"
-#include "findreplacedialog.h"
 
 #include <QPainter>
 #include <QTextBlock>
@@ -108,9 +107,16 @@ void Editor::lineNumberAreaPaintEvent(QPaintEvent *event)
 
 void Editor::findReplace()
 {
-    auto findReplace = new FindReplaceDialog(this);
-    findReplace->setAttribute(Qt::WA_DeleteOnClose);
-    findReplace->show();
+    if (m_findReplace)
+        return;
+
+    m_findReplace = new FindReplaceDialog(this);
+
+    connect(m_findReplace, &FindReplaceDialog::message, this, &Editor::message);
+    connect(m_findReplace, &FindReplaceDialog::destroyed, this, [&]() {m_findReplace = nullptr;});
+
+    m_findReplace->setAttribute(Qt::WA_DeleteOnClose);
+    m_findReplace->show();
 }
 
 void Editor::mousePressEvent(QMouseEvent *e)

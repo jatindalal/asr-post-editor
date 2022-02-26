@@ -21,8 +21,8 @@ Tool::Tool(QWidget *parent)
     connect(ui->m_playerControls, &PlayerControls::play, player, &QMediaPlayer::play);
     connect(ui->m_playerControls, &PlayerControls::pause, player, &QMediaPlayer::pause);
     connect(ui->m_playerControls, &PlayerControls::stop, player, &QMediaPlayer::stop);
-    connect(ui->m_playerControls, &PlayerControls::seekForward, player, [=]() {player->seek(5);});
-    connect(ui->m_playerControls, &PlayerControls::seekBackward, player, [=]() {player->seek(-5);});
+    connect(ui->m_playerControls, &PlayerControls::seekForward, player, [&]() {player->seek(5);});
+    connect(ui->m_playerControls, &PlayerControls::seekBackward, player, [&]() {player->seek(-5);});
     connect(ui->m_playerControls, &PlayerControls::changeVolume, player, &QMediaPlayer::setVolume);
     connect(ui->m_playerControls, &PlayerControls::changeMuting, player, &QMediaPlayer::setMuted);
     connect(ui->m_playerControls, &PlayerControls::changeRate, player, &QMediaPlayer::setPlaybackRate);
@@ -35,7 +35,7 @@ Tool::Tool(QWidget *parent)
 
     // Connect components dependent on Player's position change to player
     connect(player, &QMediaPlayer::positionChanged, this,
-        [=]()
+        [&]()
         {
             ui->slider_position->setValue(player->position());
             ui->label_position->setText(player->getPositionInfo());
@@ -44,7 +44,7 @@ Tool::Tool(QWidget *parent)
     );
 
     connect(player, &QMediaPlayer::durationChanged, this,
-        [=]()
+        [&]()
         {
             ui->slider_position->setRange(0, player->duration());
             ui->label_position->setText(player->getPositionInfo());
@@ -56,14 +56,15 @@ Tool::Tool(QWidget *parent)
     connect(ui->editor_debugBlocks, &QAction::triggered, ui->m_editor, &Editor::showBlocksFromData);
     connect(ui->editor_save, &QAction::triggered, ui->m_editor, &Editor::saveTranscript);
     connect(ui->editor_jumpToLine, &QAction::triggered, ui->m_editor, &Editor::jumpToHighlightedLine);
-    connect(ui->editor_splitLine, &QAction::triggered, ui->m_editor, [=]() {ui->m_editor->splitLine(player->elapsedTime());});
+    connect(ui->editor_splitLine, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->splitLine(player->elapsedTime());});
     connect(ui->editor_mergeUp, &QAction::triggered, ui->m_editor, &Editor::mergeUp);
     connect(ui->editor_mergeDown, &QAction::triggered, ui->m_editor, &Editor::mergeDown);
+    connect(ui->editor_findReplace, &QAction::triggered, ui->m_editor, &Editor::findReplace);
     connect(ui->m_editor, &Editor::message, this->statusBar(), &QStatusBar::showMessage);
     connect(ui->m_editor, &Editor::jumpToPlayer, player, &MediaPlayer::setPositionToTime);
 
     // Connect position slider change to player position
-    connect(ui->slider_position, &QSlider::sliderMoved, player, [=](){player->setPosition(ui->slider_position->value());});
+    connect(ui->slider_position, &QSlider::sliderMoved, player, [&](){player->setPosition(ui->slider_position->value());});
 }
 
 Tool::~Tool()

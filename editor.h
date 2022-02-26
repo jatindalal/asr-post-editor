@@ -10,6 +10,7 @@
 #include <QRegularExpression>
 
 #include "highlighter.h"
+#include "findreplacedialog.h"
 
 class LineNumberArea;
 
@@ -67,6 +68,7 @@ private:
     QList<block> m_blocks;
     Highlighter *m_highlighter = nullptr;
     qint64 highlightedBlock = -1, highlightedWord = -1;
+    FindReplaceDialog *m_findReplace = nullptr;
 };
 
 
