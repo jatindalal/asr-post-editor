@@ -43,6 +43,12 @@ void FindReplaceDialog::updateFlags()
 
 void FindReplaceDialog::findNext()
 {
+    if (!m_Editor->textCursor().hasSelection()) {
+        QTextCursor textCursor = m_Editor->textCursor();
+        textCursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor,1);
+        m_Editor->setTextCursor(textCursor);
+    }
+
     QString query = ui->text_find->text();
     m_Editor->find(query, flags);
     if (m_Editor->textCursor().hasSelection() && m_Editor->textCursor().selectedText() == query)
@@ -51,6 +57,12 @@ void FindReplaceDialog::findNext()
 
 void FindReplaceDialog::findPrevious()
 {
+    if (!m_Editor->textCursor().hasSelection()) {
+        QTextCursor textCursor = m_Editor->textCursor();
+        textCursor.movePosition(QTextCursor::End, QTextCursor::MoveAnchor,1);
+        m_Editor->setTextCursor(textCursor);
+    }
+
     QString query = ui->text_find->text();
     m_Editor->find(query, QTextDocument::FindBackward | flags);
     if (m_Editor->textCursor().hasSelection() && m_Editor->textCursor().selectedText() == query)
