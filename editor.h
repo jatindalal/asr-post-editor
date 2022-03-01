@@ -1,20 +1,14 @@
 #pragma once
 
-#include <QPlainTextEdit>
-#include <QPaintEvent>
-#include <QResizeEvent>
-#include <QSize>
-#include <QWidget>
+#include "texteditor.h"
+#include "highlighter.h"
+#include "findreplacedialog.h"
+
 #include <QTime>
 #include <QXmlStreamReader>
 #include <QRegularExpression>
 
-#include "highlighter.h"
-#include "findreplacedialog.h"
-
-class LineNumberArea;
-
-class Editor : public QPlainTextEdit
+class Editor : public TextEditor
 {
     Q_OBJECT
 
@@ -23,14 +17,11 @@ class Editor : public QPlainTextEdit
 
 public:
     explicit Editor(QWidget *parent = nullptr);
-    void lineNumberAreaPaintEvent(QPaintEvent *event);
-    int lineNumberAreaWidth();
 
     QRegularExpression timeStampExp, speakerExp;
     void findReplace();
 
 protected:
-    void resizeEvent(QResizeEvent *event) override;
     void mousePressEvent(QMouseEvent *e) override;
 
 signals:
@@ -48,9 +39,6 @@ public slots:
     void mergeDown();
 
 private slots:
-    void updateLineNumberAreaWidth(int newBlockCount);
-    void highlightCurrentLine();
-    void updateLineNumberArea(const QRect &rect, int dy);
     void contentChanged(int position, int charsRemoved, int charsAdded);
 
 private:
@@ -63,7 +51,6 @@ private:
     void helpJumpToPlayer();
 
     bool settingContent{false};
-    QWidget *lineNumberArea;
     QFile *m_file = nullptr;
     QList<block> m_blocks;
     Highlighter *m_highlighter = nullptr;
@@ -98,26 +85,5 @@ struct Editor::block
              return true;
           return false;
     }
-};
-
-class LineNumberArea : public QWidget
-{
-public:
-    explicit LineNumberArea(Editor *parentEditor) : QWidget(parentEditor), m_editor(parentEditor)
-    {}
-
-    QSize sizeHint() const override
-    {
-        return QSize(m_editor->lineNumberAreaWidth(), 0);
-    }
-
-protected:
-    void paintEvent(QPaintEvent *event) override
-    {
-        m_editor->lineNumberAreaPaintEvent(event);
-    }
-
-private:
-    Editor *m_editor;
 };
 
