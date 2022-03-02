@@ -48,7 +48,13 @@
         </item>
        </layout>
       </widget>
-      <widget class="Editor" name="m_editor"/>
+      <widget class="QSplitter" name="editorLayout">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="Editor" name="m_editor"/>
+       <widget class="TextEditor" name="m_wordEditor" native="true"/>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -87,6 +93,7 @@
     <addaction name="editor_mergeUp"/>
     <addaction name="editor_mergeDown"/>
     <addaction name="editor_findReplace"/>
+    <addaction name="editor_toggleWords"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuMedia_Player"/>
@@ -153,6 +160,11 @@
     <string>Find Replace</string>
    </property>
   </action>
+  <action name="editor_toggleWords">
+   <property name="text">
+    <string>Toggle Word Editor</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -171,6 +183,12 @@
    <class>Editor</class>
    <extends>QPlainTextEdit</extends>
    <header>editor.h</header>
+  </customwidget>
+  <customwidget>
+   <class>TextEditor</class>
+   <extends>QWidget</extends>
+   <header>texteditor.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

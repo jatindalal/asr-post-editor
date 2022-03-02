@@ -1,5 +1,7 @@
 #pragma once
 
+#include "findreplacedialog.h"
+
 #include <QPlainTextEdit>
 
 class LineNumberArea;
@@ -7,13 +9,19 @@ class LineNumberArea;
 class TextEditor : public QPlainTextEdit
 {
     Q_OBJECT
+
 public:
     explicit TextEditor(QWidget *parent = nullptr);
     void lineNumberAreaPaintEvent(QPaintEvent *event);
+    void findReplace();
     int lineNumberAreaWidth();
+
+signals:
+    void message(const QString& text, int timeout = 5000);
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
@@ -22,6 +30,7 @@ private slots:
 
 private:
     QWidget *lineNumberArea;
+    FindReplaceDialog *m_findReplace = nullptr;
 };
 
 class LineNumberArea : public QWidget

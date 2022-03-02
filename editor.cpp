@@ -4,6 +4,7 @@
 #include <QTextBlock>
 #include <QFileDialog>
 #include <QStandardPaths>
+#include <QDebug>
 
 Editor::Editor(QWidget *parent) : TextEditor(parent)
 {
@@ -13,18 +14,46 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
     connect(this->document(), &QTextDocument::contentsChange, this, &Editor::contentChanged);
 }
 
-void Editor::findReplace()
+void Highlighter::highlightBlock(const QString& text)
 {
-    if (m_findReplace)
+    if (invalidBlockNumbers.contains(currentBlock().blockNumber())) {
+        QTextCharFormat format;
+        format.setForeground(Qt::red);
+        setFormat(0, text.size(), format);
         return;
+    }
+    if (blockToHighlight == -1)
+        return;
+    else if (currentBlock().blockNumber() == blockToHighlight) {
+        int speakerEnd = 0;
+        auto speakerMatch = QRegularExpression(R"(\[[\w\.]*]:)").match(text);
+        if (speakerMatch.hasMatch())
+            speakerEnd = speakerMatch.capturedEnd();
 
-    m_findReplace = new FindReplaceDialog(this);
+        int timeStampStart = QRegularExpression(R"(\[(\d?\d:)?[0-5]?\d:[0-5]?\d(\.\d\d?\d?)?])").match(text).capturedStart();
 
-    connect(m_findReplace, &FindReplaceDialog::message, this, &Editor::message);
-    connect(m_findReplace, &FindReplaceDialog::destroyed, this, [&]() {m_findReplace = nullptr;});
+        QTextCharFormat format;
+        format.setForeground(QColor(Qt::blue).lighter(120));
+        setFormat(0, speakerEnd, format);
 
-    m_findReplace->setAttribute(Qt::WA_DeleteOnClose);
-    m_findReplace->show();
+        format.setForeground(Qt::green);
+        setFormat(speakerEnd, timeStampStart, format);
+
+        format.setForeground(Qt::red);
+        setFormat(timeStampStart, text.size(), format);
+
+        auto words = text.mid(speakerEnd + 1).split(" ");
+
+        if (wordToHighlight != -1 && wordToHighlight < words.size()) {
+            int start = speakerEnd;
+            for (int i=0; i < wordToHighlight; i++) start += (words[i].size() + 1);
+            int count = words[wordToHighlight].size();
+
+            format.setBackground(Qt::yellow);
+            format.setForeground(Qt::black);
+            setFormat(start + 1, count, format);
+        }
+    }
 }
 
 void Editor::mousePressEvent(QMouseEvent *e)
@@ -72,7 +101,7 @@ void Editor::saveTranscript()
         if (!document()->isEmpty()) {
             auto *file = new QFile(fileUrl.toLocalFile());
             if (!file->open(QIODevice::WriteOnly)) {
-                qInfo() << file->errorString();
+                emit message(file->errorString());
                 return;
             }
             saveXml(file);
@@ -150,7 +179,7 @@ Editor::word Editor::makeWord(const QTime& t, const QString& s)
 Editor::block Editor::fromEditor(qint64 blockNumber)
 {
     QTime timeStamp;
-    QList<word> words;
+    QVector<word> words;
     QString text, speaker, blockText(document()->findBlockByNumber(blockNumber).text());
 
     QRegularExpressionMatch match = timeStampExp.match(blockText);
@@ -197,7 +226,7 @@ void Editor::loadTranscriptData(QFile *file)
                     auto blockText = QString("");
                     auto blockSpeaker = reader.attributes().value("speaker").toString();
 
-                    struct block line = {blockTimeStamp, "", blockSpeaker, QList<word>()};
+                    struct block line = {blockTimeStamp, "", blockSpeaker, QVector<word>()};
                     while(reader.readNextStartElement()){
                         if(reader.name() == "word"){
                             auto wordTimeStamp  = getTime(reader.attributes().value("timestamp").toString());
@@ -401,7 +430,7 @@ void Editor::splitLine(const QTime& elapsedTime)
         textAfterCursor = textAfterCursor.split("[").first();
 
     auto timeStampOfCutWord = m_blocks[highlightedBlock].words[wordNumber].timeStamp;
-    QList<word> words;
+    QVector<word> words;
     int sizeOfWordsAfter = m_blocks[highlightedBlock].words.size() - wordNumber - 1;
 
     if (cutWordRight != "")

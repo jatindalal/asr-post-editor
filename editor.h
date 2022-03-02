@@ -1,12 +1,15 @@
 #pragma once
 
 #include "texteditor.h"
-#include "highlighter.h"
 #include "findreplacedialog.h"
 
 #include <QTime>
 #include <QXmlStreamReader>
 #include <QRegularExpression>
+#include <QSyntaxHighlighter>
+#include <QTextDocument>
+
+class Highlighter;
 
 class Editor : public TextEditor
 {
@@ -19,14 +22,12 @@ public:
     explicit Editor(QWidget *parent = nullptr);
 
     QRegularExpression timeStampExp, speakerExp;
-    void findReplace();
 
 protected:
     void mousePressEvent(QMouseEvent *e) override;
 
 signals:
     void jumpToPlayer(const QTime& time);
-    void message(const QString& text, int timeout = 5000);
 
 public slots:
     void openTranscript();
@@ -52,10 +53,9 @@ private:
 
     bool settingContent{false};
     QFile *m_file = nullptr;
-    QList<block> m_blocks;
+    QVector<block> m_blocks;
     Highlighter *m_highlighter = nullptr;
     qint64 highlightedBlock = -1, highlightedWord = -1;
-    FindReplaceDialog *m_findReplace = nullptr;
 };
 
 
@@ -77,7 +77,7 @@ struct Editor::block
     QTime timeStamp;
     QString text;
     QString speaker;
-    QList<word> words;
+    QVector<word> words;
 
     inline bool operator==(block b) const
     {
@@ -85,5 +85,46 @@ struct Editor::block
              return true;
           return false;
     }
+};
+
+
+class Highlighter : public QSyntaxHighlighter
+{
+    Q_OBJECT
+public:
+    Highlighter(QTextDocument *parent = nullptr) : QSyntaxHighlighter(parent) {};
+
+    void clearHighlight()
+    {
+        blockToHighlight = -1;
+        wordToHighlight = -1;
+    }
+    void setBlockToHighlight(qint64 blockNumber)
+    {
+        blockToHighlight = blockNumber;
+        rehighlight();
+    }
+    void setWordToHighlight(int wordNumber)
+    {
+        wordToHighlight = wordNumber;
+        rehighlight();
+    }
+
+    void setInvalidBlocks(const QList<int> invalidBlocks)
+    {
+        invalidBlockNumbers = invalidBlocks;
+        rehighlight();
+    }
+    void clearInvalidBlocks()
+    {
+        invalidBlockNumbers.clear();
+    }
+
+    void highlightBlock(const QString&) override;
+
+private:
+    int blockToHighlight{-1};
+    int wordToHighlight{-1};
+    QList<int> invalidBlockNumbers;
 };
 

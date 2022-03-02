@@ -13,6 +13,8 @@ Tool::Tool(QWidget *parent)
     player = new MediaPlayer(this);
     player->setVideoOutput(ui->m_videoWidget);
 
+    ui->m_wordEditor->setHidden(true);
+
     connect(ui->close, &QAction::triggered, this, &QMainWindow::close);
 
     // Connect Player Controls and Media Player
@@ -60,6 +62,7 @@ Tool::Tool(QWidget *parent)
     connect(ui->editor_mergeUp, &QAction::triggered, ui->m_editor, &Editor::mergeUp);
     connect(ui->editor_mergeDown, &QAction::triggered, ui->m_editor, &Editor::mergeDown);
     connect(ui->editor_findReplace, &QAction::triggered, ui->m_editor, &Editor::findReplace);
+    connect(ui->editor_toggleWords, &QAction::triggered, ui->m_wordEditor, [&](){ui->m_wordEditor->setVisible(!ui->m_wordEditor->isVisible());});
     connect(ui->m_editor, &Editor::message, this->statusBar(), &QStatusBar::showMessage);
     connect(ui->m_editor, &Editor::jumpToPlayer, player, &MediaPlayer::setPositionToTime);
 
@@ -98,12 +101,12 @@ void Tool::keyPressEvent(QKeyEvent *event)
         ui->m_editor->jumpToHighlightedLine();
     else if (event->key() == Qt::Key_S && event->modifiers() == Qt::ControlModifier)
         ui->m_editor->saveTranscript();
-    else if (event->key() == Qt::Key_F && event->modifiers() == Qt::ControlModifier)
-        ui->m_editor->findReplace();
     else if (event->key() == Qt::Key_Up && event->modifiers() == Qt::ControlModifier)
         ui->m_editor->mergeUp();
     else if (event->key() == Qt::Key_Down && event->modifiers() == Qt::ControlModifier)
         ui->m_editor->mergeDown();
+    else if (event->key() == Qt::Key_W && event->modifiers() == Qt::ControlModifier)
+        ui->m_wordEditor->setVisible(!ui->m_wordEditor->isVisible());
     else
         QMainWindow::keyPressEvent(event);
 }

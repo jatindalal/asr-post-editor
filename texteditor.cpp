@@ -29,6 +29,21 @@ int TextEditor::lineNumberAreaWidth()
     return space;
 }
 
+
+void TextEditor::findReplace()
+{
+    if (m_findReplace)
+        return;
+
+    m_findReplace = new FindReplaceDialog(this);
+
+    connect(m_findReplace, &FindReplaceDialog::message, this, &TextEditor::message);
+    connect(m_findReplace, &FindReplaceDialog::destroyed, this, [&]() {m_findReplace = nullptr;});
+
+    m_findReplace->setAttribute(Qt::WA_DeleteOnClose);
+    m_findReplace->show();
+}
+
 void TextEditor::updateLineNumberAreaWidth(int /* newBlockCount */)
 {
     setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
@@ -97,4 +112,11 @@ void TextEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
         bottom = top + qRound(blockBoundingRect(block).height());
         ++blockNumber;
     }
+}
+
+void TextEditor::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_F && event->modifiers() == Qt::ControlModifier)
+        findReplace();
+    QPlainTextEdit::keyPressEvent(event);
 }
