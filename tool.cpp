@@ -54,6 +54,9 @@ Tool::Tool(QWidget *parent)
     );
 
     // Connect Editor controls
+
+    ui->m_editor->setWordEditor(ui->m_wordEditor);
+
     connect(ui->editor_openTranscript, &QAction::triggered, ui->m_editor, &Editor::openTranscript);
     connect(ui->editor_debugBlocks, &QAction::triggered, ui->m_editor, &Editor::showBlocksFromData);
     connect(ui->editor_save, &QAction::triggered, ui->m_editor, &Editor::saveTranscript);

@@ -12,6 +12,7 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
     speakerExp = QRegularExpression(R"(\[[\w\.]*]:)");
 
     connect(this->document(), &QTextDocument::contentsChange, this, &Editor::contentChanged);
+    connect(this, &Editor::cursorPositionChanged, this, &Editor::updateWordEditor);
 }
 
 void Highlighter::highlightBlock(const QString& text)
@@ -338,7 +339,10 @@ void Editor::setContent()
         for (int i = 0; i < m_blocks.size(); i++)
             if (m_blocks[i].timeStamp.isNull())
                 invalidBlocks.append(i);
+
         m_highlighter->setInvalidBlocks(invalidBlocks);
+        m_highlighter->setBlockToHighlight(highlightedBlock);
+        m_highlighter->setWordToHighlight(highlightedWord);
 
         settingContent = false;
     }
@@ -382,9 +386,9 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
     auto& currentBlockFromData = m_blocks[currentBlockNumber];
     if (currentBlockFromData.speaker != currentBlockFromEditor.speaker)
         currentBlockFromData.speaker = currentBlockFromEditor.speaker;
-    else if (currentBlockFromData.timeStamp != currentBlockFromEditor.timeStamp)
+    if (currentBlockFromData.timeStamp != currentBlockFromEditor.timeStamp)
         currentBlockFromData.timeStamp = currentBlockFromEditor.timeStamp;
-    else if( currentBlockFromData.text != currentBlockFromEditor.text)
+    if( currentBlockFromData.text != currentBlockFromEditor.text)
         currentBlockFromData = currentBlockFromEditor;
 
     m_highlighter->setBlockToHighlight(highlightedBlock);
@@ -395,6 +399,8 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
         if (m_blocks[i].timeStamp.isNull())
             invalidBlocks.append(i);
     m_highlighter->setInvalidBlocks(invalidBlocks);
+
+    updateWordEditor();
 }
 
 void Editor::jumpToHighlightedLine()
@@ -454,6 +460,7 @@ void Editor::splitLine(const QTime& elapsedTime)
     m_blocks[highlightedBlock].timeStamp = elapsedTime;
 
     setContent();
+    updateWordEditor();
 }
 
 void Editor::mergeUp()
@@ -472,6 +479,7 @@ void Editor::mergeUp()
 
     m_blocks.removeAt(blockNumber);
     setContent();
+    updateWordEditor();
 
     QTextCursor cursor(document()->findBlockByNumber(previousBlockNumber));
     setTextCursor(cursor);
@@ -498,8 +506,97 @@ void Editor::mergeDown()
 
     m_blocks.removeAt(blockNumber);
     setContent();
+    updateWordEditor();
 
     QTextCursor cursor(document()->findBlockByNumber(blockNumber));
     setTextCursor(cursor);
     centerCursor();
+}
+
+Editor::word Editor::fromWordEditor(qint64 blockNumber)
+{
+    QTime timeStamp;
+    QString text, blockText(m_wordEditor->document()->findBlockByNumber(blockNumber).text());
+
+    QRegularExpressionMatch match = timeStampExp.match(blockText);
+    if (match.hasMatch()) {
+        QString matchedTimeStampString = match.captured();
+        if (blockText.mid(match.capturedEnd()).trimmed() == "") {
+            timeStamp = getTime(matchedTimeStampString.mid(1,matchedTimeStampString.size() - 2));
+            text = blockText.split(matchedTimeStampString)[0];
+        }
+    }
+
+    if (text == "")
+        text = blockText.trimmed();
+    else
+        text = text.trimmed();
+
+    if (text.contains(" "))
+        text = text.split(" ").first();
+
+    word w = {timeStamp, text};
+    return w;
+}
+
+void Editor::updateWordEditor()
+{
+    if (!m_wordEditor || dontUpdateWordEditor)
+        return;
+
+    updatingWordEditor = true;
+
+    auto blockNumber = textCursor().blockNumber();
+
+    if (blockNumber >= m_blocks.size()) {
+        m_wordEditor->clear();
+        return;
+    }
+
+    auto& words = m_blocks[blockNumber].words;
+    QString content;
+
+    for (auto& a_word: qAsConst(words)) {
+        content += a_word.text + " [" + a_word.timeStamp.toString("hh:mm:ss.zzz") + "]\n";
+    }
+
+    m_wordEditor->setPlainText(content.trimmed());
+
+    updatingWordEditor = false;
+}
+
+void Editor::wordEditorChanged(int position, int charsRemoved, int charsAdded)
+{
+    auto editorBlockNumber = textCursor().blockNumber();
+
+    if (document()->isEmpty() || m_blocks.isEmpty())
+        m_blocks.append(fromEditor(0));
+
+    if (!(charsAdded || charsRemoved) || settingContent || updatingWordEditor || editorBlockNumber >= m_blocks.size())
+        return;
+
+    auto& block = m_blocks[editorBlockNumber];
+    if (!block.words.size()) {
+        for (int i = 0; i < m_wordEditor->document()->blockCount(); i++)
+            block.words.append(fromWordEditor(i));
+        return;
+    }
+
+    auto& words = block.words;
+    words.clear();
+
+    QString blockText;
+    for (int i = 0; i < m_wordEditor->blockCount(); i++) {
+        auto wordToAppend = fromWordEditor(i);
+        blockText += wordToAppend.text + " ";
+        words.append(wordToAppend);
+    }
+    block.text = blockText.trimmed();
+
+    dontUpdateWordEditor = true;
+    setContent();
+    QTextCursor cursor(document()->findBlockByNumber(editorBlockNumber));
+    setTextCursor(cursor);
+    centerCursor();
+    dontUpdateWordEditor = false;
 }

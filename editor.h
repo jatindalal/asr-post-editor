@@ -21,6 +21,12 @@ class Editor : public TextEditor
 public:
     explicit Editor(QWidget *parent = nullptr);
 
+    void setWordEditor(TextEditor* wordEditor)
+    {
+        m_wordEditor = wordEditor;        
+        connect(m_wordEditor->document(), &QTextDocument::contentsChange, this, &Editor::wordEditorChanged);
+    }
+
     QRegularExpression timeStampExp, speakerExp;
 
 protected:
@@ -41,21 +47,25 @@ public slots:
 
 private slots:
     void contentChanged(int position, int charsRemoved, int charsAdded);
+    void wordEditorChanged(int position, int charsRemoved, int charsAdded);
+    void updateWordEditor();
 
 private:
     QTime getTime(const QString& text);
     word makeWord(const QTime& t, const QString& s);
     block fromEditor(qint64 blockNumber);
+    word fromWordEditor(qint64 blockNumber);
     void loadTranscriptData(QFile* file);
     void setContent();
     void saveXml(QFile* file);
     void helpJumpToPlayer();
 
-    bool settingContent{false};
-    QFile *m_file = nullptr;
+    bool settingContent{false}, updatingWordEditor{false}, dontUpdateWordEditor{false};
+    QFile* m_file = nullptr;
     QVector<block> m_blocks;
-    Highlighter *m_highlighter = nullptr;
+    Highlighter* m_highlighter = nullptr;
     qint64 highlightedBlock = -1, highlightedWord = -1;
+    TextEditor* m_wordEditor;
 };
 
 
