@@ -1,7 +1,7 @@
 #pragma once
 
 #include "texteditor.h"
-#include "findreplacedialog.h"
+#include "changespeakerdialog.h"
 
 #include <QTime>
 #include <QXmlStreamReader>
@@ -31,6 +31,7 @@ public:
 
 protected:
     void mousePressEvent(QMouseEvent *e) override;
+    void keyPressEvent(QKeyEvent *event) override;
 
 signals:
     void jumpToPlayer(const QTime& time);
@@ -44,16 +45,18 @@ public slots:
     void splitLine(const QTime& elapsedTime);
     void mergeUp();
     void mergeDown();
+    void createChangeSpeakerDialog();
 
 private slots:
     void contentChanged(int position, int charsRemoved, int charsAdded);
     void wordEditorChanged(int position, int charsRemoved, int charsAdded);
     void updateWordEditor();
+    void changeSpeaker(const QString& newSpeaker, bool replaceAllOccurrences);
 
 private:
     QTime getTime(const QString& text);
-    word makeWord(const QTime& t, const QString& s);
     block fromEditor(qint64 blockNumber);
+    word makeWord(const QTime& t, const QString& s);
     word fromWordEditor(qint64 blockNumber);
     void loadTranscriptData(QFile* file);
     void setContent();
@@ -65,7 +68,8 @@ private:
     QVector<block> m_blocks;
     Highlighter* m_highlighter = nullptr;
     qint64 highlightedBlock = -1, highlightedWord = -1;
-    TextEditor* m_wordEditor;
+    TextEditor* m_wordEditor = nullptr;
+    ChangeSpeakerDialog* m_changeSpeaker = nullptr;
 };
 
 

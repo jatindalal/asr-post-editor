@@ -64,6 +64,13 @@ void Editor::mousePressEvent(QMouseEvent *e)
         helpJumpToPlayer();
 }
 
+void Editor::keyPressEvent(QKeyEvent *event)
+{
+    TextEditor::keyPressEvent(event);
+    if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_R)
+        createChangeSpeakerDialog();
+}
+
 void Editor::openTranscript()
 {
     QFileDialog fileDialog(this);
@@ -513,6 +520,35 @@ void Editor::mergeDown()
     centerCursor();
 }
 
+void Editor::createChangeSpeakerDialog()
+{
+    if (m_changeSpeaker)
+        return;
+
+    m_changeSpeaker = new ChangeSpeakerDialog(this);
+    m_changeSpeaker->setModal(true);
+
+    QSet<QString> speakers;
+    for (auto& a_block: qAsConst(m_blocks))
+        speakers.insert(a_block.speaker);
+
+    m_changeSpeaker->addItems(speakers.values());
+
+    connect(m_changeSpeaker,
+            &ChangeSpeakerDialog::accepted,
+            this,
+            [&]() {
+                changeSpeaker(m_changeSpeaker->speaker(), m_changeSpeaker->replaceAll());
+                delete m_changeSpeaker;
+                m_changeSpeaker = nullptr;
+            }
+    );
+    connect(m_changeSpeaker, &ChangeSpeakerDialog::rejected, this, [&]() {delete m_changeSpeaker; m_changeSpeaker = nullptr;});
+    connect(m_changeSpeaker, &ChangeSpeakerDialog::finished, this, [&]() {delete m_changeSpeaker; m_changeSpeaker = nullptr;});
+
+    m_changeSpeaker->show();
+}
+
 Editor::word Editor::fromWordEditor(qint64 blockNumber)
 {
     QTime timeStamp;
@@ -599,4 +635,24 @@ void Editor::wordEditorChanged(int position, int charsRemoved, int charsAdded)
     setTextCursor(cursor);
     centerCursor();
     dontUpdateWordEditor = false;
+}
+
+void Editor::changeSpeaker(const QString& newSpeaker, bool replaceAllOccurrences)
+{
+    auto blockNumber = textCursor().blockNumber();
+    auto blockSpeaker = m_blocks[blockNumber].speaker;
+
+    if (!replaceAllOccurrences)
+        m_blocks[blockNumber].speaker = newSpeaker;
+    else {
+        for (auto& a_block: m_blocks){
+            if (a_block.speaker == blockSpeaker)
+                a_block.speaker = newSpeaker;
+        }
+    }
+
+    setContent();
+    QTextCursor cursor(document()->findBlockByNumber(blockNumber));
+    setTextCursor(cursor);
+    centerCursor();
 }

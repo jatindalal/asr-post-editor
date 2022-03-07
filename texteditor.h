@@ -13,8 +13,10 @@ class TextEditor : public QPlainTextEdit
 public:
     explicit TextEditor(QWidget *parent = nullptr);
     void lineNumberAreaPaintEvent(QPaintEvent *event);
-    void findReplace();
     int lineNumberAreaWidth();
+
+public slots:
+    void findReplace();
 
 signals:
     void message(const QString& text, int timeout = 5000);
