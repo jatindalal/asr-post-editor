@@ -18,9 +18,6 @@ public:
     bool replaceAll();
     void addItems(const QStringList& speakers);
 
-private slots:
-    void speakerChanged(const QString &speaker);
-
 private:
     Ui::ChangeSpeakerDialog* ui;
 };

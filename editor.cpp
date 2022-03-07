@@ -639,6 +639,8 @@ void Editor::wordEditorChanged(int position, int charsRemoved, int charsAdded)
 
 void Editor::changeSpeaker(const QString& newSpeaker, bool replaceAllOccurrences)
 {
+    if (m_blocks.isEmpty())
+        return;
     auto blockNumber = textCursor().blockNumber();
     auto blockSpeaker = m_blocks[blockNumber].speaker;
 

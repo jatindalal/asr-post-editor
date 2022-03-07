@@ -9,9 +9,7 @@ ChangeSpeakerDialog::ChangeSpeakerDialog(QWidget* parent)
 {
     ui->setupUi(this);
 
-    ui->comboBox_speaker->addItem("Custom");
-
-    connect(ui->comboBox_speaker, &QComboBox::currentTextChanged, this, &ChangeSpeakerDialog::speakerChanged);
+    ui->comboBox_speaker->setEditable(true);
 }
 
 ChangeSpeakerDialog::~ChangeSpeakerDialog()
@@ -19,26 +17,9 @@ ChangeSpeakerDialog::~ChangeSpeakerDialog()
     delete ui;
 }
 
-void ChangeSpeakerDialog::speakerChanged(const QString &speaker)
-{
-    if (speaker == "Custom") {
-        ui->label_newSpeaker->setVisible(true);
-        ui->lineEdit_newSpeaker->setVisible(true);
-    }
-    else {
-        ui->label_newSpeaker->setHidden(true);
-        ui->lineEdit_newSpeaker->setHidden(true);
-    }
-}
-
 QString ChangeSpeakerDialog::speaker()
 {
-    QString selectedSpeaker = ui->comboBox_speaker->currentText();
-
-    if (selectedSpeaker == "Custom")
-        selectedSpeaker = ui->lineEdit_newSpeaker->text();
-
-    return selectedSpeaker;
+    return ui->comboBox_speaker->currentText();
 }
 
 bool ChangeSpeakerDialog::replaceAll()
