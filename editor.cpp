@@ -387,16 +387,54 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
             }
         }
     }
-    // If current block's text is changed then replace it with new data
-    // TODO: If text of some word is changed or new word is added then only that should have invalid timestamp
+    
     auto currentBlockFromEditor = fromEditor(currentBlockNumber);
     auto& currentBlockFromData = m_blocks[currentBlockNumber];
+
     if (currentBlockFromData.speaker != currentBlockFromEditor.speaker)
         currentBlockFromData.speaker = currentBlockFromEditor.speaker;
+
     if (currentBlockFromData.timeStamp != currentBlockFromEditor.timeStamp)
         currentBlockFromData.timeStamp = currentBlockFromEditor.timeStamp;
-    if( currentBlockFromData.text != currentBlockFromEditor.text)
+
+    if (currentBlockFromData.text != currentBlockFromEditor.text) {
+        currentBlockFromData.text = currentBlockFromEditor.text;
+
+        auto& wordsFromEditor = currentBlockFromEditor.words;
+        auto& wordsFromData = currentBlockFromData.words;
+
+        int wordsDifference = wordsFromEditor.size() - wordsFromData.size();
+        int diffStart{-1}, diffEnd{-1};
+
+        for (int i = 0; i < wordsFromEditor.size() && i < wordsFromData.size(); i++)
+            if (wordsFromEditor[i].text != wordsFromData[i].text) {
+                diffStart = i;
+                break;
+            }
+
+        if (diffStart == -1)
+            diffStart = wordsFromEditor.size() - 1;
+        for (int i = 0; i <= diffStart; i++)
+            if (i < wordsFromData.size())
+                wordsFromEditor[i].timeStamp = wordsFromData[i].timeStamp;
+        if (!wordsDifference) {
+            for (int i = diffStart; i < wordsFromEditor.size(); i++)
+                wordsFromEditor[i].timeStamp = wordsFromData[i].timeStamp;
+        }
+
+        if (wordsDifference > 0) {
+            for (int i = wordsFromEditor.size() - 1, j = wordsFromData.size() - 1; j > diffStart; i--, j--)
+                if (wordsFromEditor[i].text == wordsFromData[j].text)
+                    wordsFromEditor[i].timeStamp = wordsFromData[j].timeStamp;
+        }
+        else if (wordsDifference < 0) {
+            for (int i = wordsFromEditor.size() - 1, j = wordsFromData.size() - 1; i > diffStart; i--, j--)
+                if (wordsFromEditor[i].text == wordsFromData[j].text)
+                    wordsFromEditor[i].timeStamp = wordsFromData[j].timeStamp;
+        }
+
         currentBlockFromData = currentBlockFromEditor;
+    }
 
     m_highlighter->setBlockToHighlight(highlightedBlock);
     m_highlighter->setWordToHighlight(highlightedWord);
