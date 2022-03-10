@@ -118,5 +118,10 @@ void TextEditor::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_F && event->modifiers() == Qt::ControlModifier)
         findReplace();
+    else if (event->key() == Qt::Key_Equal && event->modifiers() == Qt::ControlModifier)
+        zoomIn();       
+    else if (event->key() == Qt::Key_Minus && event->modifiers() == Qt::ControlModifier)
+        zoomOut();
+
     QPlainTextEdit::keyPressEvent(event);
 }

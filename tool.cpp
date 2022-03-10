@@ -8,7 +8,6 @@ Tool::Tool(QWidget *parent)
     , ui(new Ui::Tool)
 {
     ui->setupUi(this);
-    ui->m_playerControls->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
 
     player = new MediaPlayer(this);
     player->setVideoOutput(ui->m_videoWidget);
