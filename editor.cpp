@@ -194,6 +194,7 @@ Editor::block Editor::fromEditor(qint64 blockNumber)
     if (match.hasMatch()) {
         QString matchedTimeStampString = match.captured();
         if (blockText.mid(match.capturedEnd()).trimmed() == "") {
+            // Get timestamp for string after removing the enclosing []
             timeStamp = getTime(matchedTimeStampString.mid(1,matchedTimeStampString.size() - 2));
             text = blockText.split(matchedTimeStampString)[0];
         }
