@@ -12,6 +12,11 @@ Tool::Tool(QWidget *parent)
     player = new MediaPlayer(this);
     player->setVideoOutput(ui->m_videoWidget);
 
+    m_activeEditor = ui->m_editor;
+
+    ui->m_editor->installEventFilter(this);
+    ui->m_wordEditor->installEventFilter(this);
+
     ui->m_wordEditor->setHidden(true);
 
     connect(ui->close, &QAction::triggered, this, &QMainWindow::close);
@@ -19,6 +24,8 @@ Tool::Tool(QWidget *parent)
     // Connect Player Controls and Media Player
     connect(ui->player_open, &QAction::triggered, player, &MediaPlayer::open);
     connect(ui->player_togglePlay, &QAction::triggered, player, &MediaPlayer::togglePlayback);
+    connect(ui->player_seekForward, &QAction::triggered, player, [&]() {player->seek(5);});
+    connect(ui->player_seekBackward, &QAction::triggered, player, [&]() {player->seek(-5);});
     connect(ui->m_playerControls, &PlayerControls::play, player, &QMediaPlayer::play);
     connect(ui->m_playerControls, &PlayerControls::pause, player, &QMediaPlayer::pause);
     connect(ui->m_playerControls, &PlayerControls::stop, player, &QMediaPlayer::stop);
@@ -52,8 +59,15 @@ Tool::Tool(QWidget *parent)
         }
     );
 
-    // Connect Editor controls
+    // Connect edit menu actions
+    connect(ui->edit_undo, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->undo();});
+    connect(ui->edit_redo, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->redo();});
+    connect(ui->edit_cut, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->cut();});
+    connect(ui->edit_copy, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->copy();});
+    connect(ui->edit_paste, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->paste();});
+    connect(ui->edit_findReplace, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->findReplace();});
 
+    // Connect Editor menu actions and editor controls
     ui->m_editor->setWordEditor(ui->m_wordEditor);
 
     connect(ui->editor_openTranscript, &QAction::triggered, ui->m_editor, &Editor::openTranscript);
@@ -63,7 +77,6 @@ Tool::Tool(QWidget *parent)
     connect(ui->editor_splitLine, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->splitLine(player->elapsedTime());});
     connect(ui->editor_mergeUp, &QAction::triggered, ui->m_editor, &Editor::mergeUp);
     connect(ui->editor_mergeDown, &QAction::triggered, ui->m_editor, &Editor::mergeDown);
-    connect(ui->editor_findReplace, &QAction::triggered, ui->m_editor, &Editor::findReplace);
     connect(ui->editor_toggleWords, &QAction::triggered, ui->m_wordEditor, [&](){ui->m_wordEditor->setVisible(!ui->m_wordEditor->isVisible());});
     connect(ui->m_editor, &Editor::message, this->statusBar(), &QStatusBar::showMessage);
     connect(ui->m_editor, &Editor::jumpToPlayer, player, &MediaPlayer::setPositionToTime);
@@ -111,4 +124,19 @@ void Tool::keyPressEvent(QKeyEvent *event)
         ui->m_wordEditor->setVisible(!ui->m_wordEditor->isVisible());
     else
         QMainWindow::keyPressEvent(event);
+}
+
+bool Tool::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() == QEvent::FocusIn) {
+        if (watched == ui->m_wordEditor) {
+            m_activeEditor = ui->m_wordEditor;
+            qDebug() << "word editor";
+        }
+        else if (watched == ui->m_editor) {
+            m_activeEditor = ui->m_editor;
+            qDebug() << "editor";
+        }
+    }
+    return false;
 }

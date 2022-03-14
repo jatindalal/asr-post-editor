@@ -81,7 +81,7 @@
      <x>0</x>
      <y>0</y>
      <width>1040</width>
-     <height>28</height>
+     <height>35</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -96,6 +96,8 @@
     </property>
     <addaction name="player_open"/>
     <addaction name="player_togglePlay"/>
+    <addaction name="player_seekForward"/>
+    <addaction name="player_seekBackward"/>
    </widget>
    <widget class="QMenu" name="menuEditor">
     <property name="title">
@@ -103,15 +105,30 @@
     </property>
     <addaction name="editor_openTranscript"/>
     <addaction name="editor_save"/>
+    <addaction name="separator"/>
     <addaction name="editor_debugBlocks"/>
     <addaction name="editor_jumpToLine"/>
+    <addaction name="separator"/>
     <addaction name="editor_splitLine"/>
     <addaction name="editor_mergeUp"/>
     <addaction name="editor_mergeDown"/>
-    <addaction name="editor_findReplace"/>
     <addaction name="editor_toggleWords"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="edit_undo"/>
+    <addaction name="edit_redo"/>
+    <addaction name="separator"/>
+    <addaction name="edit_cut"/>
+    <addaction name="edit_copy"/>
+    <addaction name="edit_paste"/>
+    <addaction name="separator"/>
+    <addaction name="edit_findReplace"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuMedia_Player"/>
    <addaction name="menuEditor"/>
   </widget>
@@ -179,6 +196,46 @@
   <action name="editor_toggleWords">
    <property name="text">
     <string>Toggle Word Editor</string>
+   </property>
+  </action>
+  <action name="player_seekForward">
+   <property name="text">
+    <string>Seek Forward</string>
+   </property>
+  </action>
+  <action name="player_seekBackward">
+   <property name="text">
+    <string>Seek Backward</string>
+   </property>
+  </action>
+  <action name="edit_undo">
+   <property name="text">
+    <string>Undo</string>
+   </property>
+  </action>
+  <action name="edit_redo">
+   <property name="text">
+    <string>Redo</string>
+   </property>
+  </action>
+  <action name="edit_cut">
+   <property name="text">
+    <string>Cut</string>
+   </property>
+  </action>
+  <action name="edit_copy">
+   <property name="text">
+    <string>Copy</string>
+   </property>
+  </action>
+  <action name="edit_paste">
+   <property name="text">
+    <string>Paste</string>
+   </property>
+  </action>
+  <action name="edit_findReplace">
+   <property name="text">
+    <string>Find / Replace</string>
    </property>
   </action>
  </widget>
