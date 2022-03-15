@@ -127,8 +127,16 @@
     <addaction name="separator"/>
     <addaction name="edit_findReplace"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="view_zoomIn"/>
+    <addaction name="view_zoomOut"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuView"/>
    <addaction name="menuMedia_Player"/>
    <addaction name="menuEditor"/>
   </widget>
@@ -236,6 +244,16 @@
   <action name="edit_findReplace">
    <property name="text">
     <string>Find / Replace</string>
+   </property>
+  </action>
+  <action name="view_zoomIn">
+   <property name="text">
+    <string>Zoom In</string>
+   </property>
+  </action>
+  <action name="view_zoomOut">
+   <property name="text">
+    <string>Zoom Out</string>
    </property>
   </action>
  </widget>

@@ -67,6 +67,10 @@ Tool::Tool(QWidget *parent)
     connect(ui->edit_paste, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->paste();});
     connect(ui->edit_findReplace, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->findReplace();});
 
+    // Connect view menu actions
+    connect(ui->view_zoomIn, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->zoomIn();});
+    connect(ui->view_zoomOut, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->zoomOut();});
+
     // Connect Editor menu actions and editor controls
     ui->m_editor->setWordEditor(ui->m_wordEditor);
 
