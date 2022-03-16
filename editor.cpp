@@ -4,6 +4,9 @@
 #include <QTextBlock>
 #include <QFileDialog>
 #include <QStandardPaths>
+#include <QAbstractItemView>
+#include <QScrollBar>
+#include <QStringListModel>
 #include <QDebug>
 
 Editor::Editor(QWidget *parent) : TextEditor(parent)
@@ -13,6 +16,15 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
 
     connect(this->document(), &QTextDocument::contentsChange, this, &Editor::contentChanged);
     connect(this, &Editor::cursorPositionChanged, this, &Editor::updateWordEditor);
+
+    m_speakerCompleter = new QCompleter(this);
+    m_speakerCompleter->setWidget(this);
+    m_speakerCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+    m_speakerCompleter->setWrapAround(false);
+    m_speakerCompleter->setCompletionMode(QCompleter::PopupCompletion);
+
+    connect(m_speakerCompleter, QOverload<const QString &>::of(&QCompleter::activated),
+                     this, &Editor::insertSpeakerCompletion);
 }
 
 void Highlighter::highlightBlock(const QString& text)
@@ -66,9 +78,62 @@ void Editor::mousePressEvent(QMouseEvent *e)
 
 void Editor::keyPressEvent(QKeyEvent *event)
 {
-    TextEditor::keyPressEvent(event);
+
     if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_R)
         createChangeSpeakerDialog();
+
+    if (m_speakerCompleter && m_speakerCompleter->popup()->isVisible()) {
+        // The following keys are forwarded by the completer to the widget
+       switch (event->key()) {
+       case Qt::Key_Enter:
+       case Qt::Key_Return:
+       case Qt::Key_Escape:
+       case Qt::Key_Tab:
+       case Qt::Key_Backtab:
+            event->ignore();
+            return; // let the completer do default behavior
+       default:
+           break;
+       }
+    }
+
+    TextEditor::keyPressEvent(event);
+
+    QList<QString> speakers;
+    for (auto& a_block: qAsConst(m_blocks))
+        if (!speakers.contains(a_block.speaker) && a_block.speaker != "")
+            speakers.append(a_block.speaker);
+
+    m_speakerCompleter->setModel(new QStringListModel(speakers, m_speakerCompleter));
+
+    QString blockText = textCursor().block().text();
+    QString textTillCursor = blockText.left(textCursor().positionInBlock()).trimmed();
+
+    if (textTillCursor.count(" ") > 0)
+        return;
+
+    QString completionPrefix = blockText.left(blockText.indexOf(" "));
+
+    if (!completionPrefix.contains("]:"))
+        return;
+
+    completionPrefix = completionPrefix.mid(1, completionPrefix.size() - 3);
+    static QString eow("~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-="); // end of word
+
+    if (event->text().isEmpty() || eow.contains(event->text().right(1))) {
+        m_speakerCompleter->popup()->hide();
+        return;
+    }
+
+    if (completionPrefix != m_speakerCompleter->completionPrefix()) {
+        m_speakerCompleter->setCompletionPrefix(completionPrefix);
+        m_speakerCompleter->popup()->setCurrentIndex(m_speakerCompleter->completionModel()->index(0, 0));
+    }
+
+    QRect cr = cursorRect();
+    cr.setWidth(m_speakerCompleter->popup()->sizeHintForColumn(0)
+                + m_speakerCompleter->popup()->verticalScrollBar()->sizeHint().width());
+    m_speakerCompleter->complete(cr);
 }
 
 void Editor::openTranscript()
@@ -696,4 +761,16 @@ void Editor::changeSpeaker(const QString& newSpeaker, bool replaceAllOccurrences
     QTextCursor cursor(document()->findBlockByNumber(blockNumber));
     setTextCursor(cursor);
     centerCursor();
+}
+
+void Editor::insertSpeakerCompletion(const QString& completion)
+{
+    if (m_speakerCompleter->widget() != this)
+        return;
+    QTextCursor tc = textCursor();
+    int extra = completion.length() - m_speakerCompleter->completionPrefix().length();
+    tc.movePosition(QTextCursor::Left);
+    tc.movePosition(QTextCursor::EndOfWord);
+    tc.insertText(completion.right(extra));
+    setTextCursor(tc);
 }

@@ -133,14 +133,10 @@ void Tool::keyPressEvent(QKeyEvent *event)
 bool Tool::eventFilter(QObject *watched, QEvent *event)
 {
     if (event->type() == QEvent::FocusIn) {
-        if (watched == ui->m_wordEditor) {
+        if (watched == ui->m_wordEditor)
             m_activeEditor = ui->m_wordEditor;
-            qDebug() << "word editor";
-        }
-        else if (watched == ui->m_editor) {
+        else if (watched == ui->m_editor)
             m_activeEditor = ui->m_editor;
-            qDebug() << "editor";
-        }
     }
     return false;
 }

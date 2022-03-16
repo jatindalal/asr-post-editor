@@ -8,6 +8,7 @@
 #include <QRegularExpression>
 #include <QSyntaxHighlighter>
 #include <QTextDocument>
+#include <QCompleter>
 
 class Highlighter;
 
@@ -52,6 +53,7 @@ private slots:
     void wordEditorChanged(int position, int charsRemoved, int charsAdded);
     void updateWordEditor();
     void changeSpeaker(const QString& newSpeaker, bool replaceAllOccurrences);
+    void insertSpeakerCompletion(const QString& completion);
 
 private:
     QTime getTime(const QString& text);
@@ -70,6 +72,7 @@ private:
     qint64 highlightedBlock = -1, highlightedWord = -1;
     TextEditor* m_wordEditor = nullptr;
     ChangeSpeakerDialog* m_changeSpeaker = nullptr;
+    QCompleter* m_speakerCompleter;
 };
 
 
