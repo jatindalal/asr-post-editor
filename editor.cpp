@@ -111,7 +111,8 @@ void Editor::keyPressEvent(QKeyEvent *event)
     QString blockText = textCursor().block().text();
     QString textTillCursor = blockText.left(textCursor().positionInBlock()).trimmed();
 
-    if (textTillCursor.count(" ") > 0 || textTillCursor.contains("]:"))
+    if (textTillCursor.count(" ") > 0 || textTillCursor.contains("]:") || textTillCursor.contains("]")
+            || !textTillCursor.size())
         return;
 
     QString completionPrefix = blockText.left(blockText.indexOf(" "));

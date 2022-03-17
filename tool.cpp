@@ -82,6 +82,7 @@ Tool::Tool(QWidget *parent)
     connect(ui->editor_mergeUp, &QAction::triggered, ui->m_editor, &Editor::mergeUp);
     connect(ui->editor_mergeDown, &QAction::triggered, ui->m_editor, &Editor::mergeDown);
     connect(ui->editor_toggleWords, &QAction::triggered, ui->m_wordEditor, [&](){ui->m_wordEditor->setVisible(!ui->m_wordEditor->isVisible());});
+    connect(ui->editor_changeSpeaker, &QAction::triggered, ui->m_editor, &Editor::createChangeSpeakerDialog);
     connect(ui->m_editor, &Editor::message, this->statusBar(), &QStatusBar::showMessage);
     connect(ui->m_editor, &Editor::jumpToPlayer, player, &MediaPlayer::setPositionToTime);
 
