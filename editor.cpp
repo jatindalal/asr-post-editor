@@ -99,6 +99,8 @@ void Editor::keyPressEvent(QKeyEvent *event)
 
     TextEditor::keyPressEvent(event);
 
+    bool shortcutPressed = (event->key() == Qt::Key_N && event->modifiers() == Qt::ControlModifier);
+
     QList<QString> speakers;
     for (auto& a_block: qAsConst(m_blocks))
         if (!speakers.contains(a_block.speaker) && a_block.speaker != "")
@@ -109,7 +111,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
     QString blockText = textCursor().block().text();
     QString textTillCursor = blockText.left(textCursor().positionInBlock()).trimmed();
 
-    if (textTillCursor.count(" ") > 0)
+    if (textTillCursor.count(" ") > 0 || textTillCursor.contains("]:"))
         return;
 
     QString completionPrefix = blockText.left(blockText.indexOf(" "));
@@ -120,7 +122,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
     completionPrefix = completionPrefix.mid(1, completionPrefix.size() - 3);
     static QString eow("~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-="); // end of word
 
-    if (event->text().isEmpty() || eow.contains(event->text().right(1))) {
+    if (!shortcutPressed && (event->text().isEmpty() || eow.contains(event->text().right(1)))) {
         m_speakerCompleter->popup()->hide();
         return;
     }
@@ -769,8 +771,12 @@ void Editor::insertSpeakerCompletion(const QString& completion)
         return;
     QTextCursor tc = textCursor();
     int extra = completion.length() - m_speakerCompleter->completionPrefix().length();
-    tc.movePosition(QTextCursor::Left);
-    tc.movePosition(QTextCursor::EndOfWord);
+
+    if (m_speakerCompleter->completionPrefix().length()) {
+        tc.movePosition(QTextCursor::Left);
+        tc.movePosition(QTextCursor::EndOfWord);
+    }
+
     tc.insertText(completion.right(extra));
     setTextCursor(tc);
 }
