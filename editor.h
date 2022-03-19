@@ -47,6 +47,8 @@ public slots:
     void mergeUp();
     void mergeDown();
     void createChangeSpeakerDialog();
+    void insertTimeStamp(const QTime& elapsedTime);
+    void insertTimeStampInWordEditor(const QTime& elapsedTime);
 
 private slots:
     void contentChanged(int position, int charsRemoved, int charsAdded);

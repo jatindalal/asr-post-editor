@@ -99,7 +99,8 @@ void Editor::keyPressEvent(QKeyEvent *event)
 
     TextEditor::keyPressEvent(event);
 
-    bool shortcutPressed = (event->key() == Qt::Key_N && event->modifiers() == Qt::ControlModifier);
+    const bool shortcutPressed = (event->key() == Qt::Key_N && event->modifiers() == Qt::ControlModifier);
+    const bool hasModifier = (event->modifiers() != Qt::NoModifier);
 
     QList<QString> speakers;
     for (auto& a_block: qAsConst(m_blocks))
@@ -123,7 +124,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
     completionPrefix = completionPrefix.mid(1, completionPrefix.size() - 3);
     static QString eow("~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-="); // end of word
 
-    if (!shortcutPressed && (event->text().isEmpty() || eow.contains(event->text().right(1)))) {
+    if (!shortcutPressed && (hasModifier || event->text().isEmpty() || eow.contains(event->text().right(1)))) {
         m_speakerCompleter->popup()->hide();
         return;
     }
@@ -654,6 +655,41 @@ void Editor::createChangeSpeakerDialog()
     connect(m_changeSpeaker, &ChangeSpeakerDialog::finished, this, [&]() {delete m_changeSpeaker; m_changeSpeaker = nullptr;});
 
     m_changeSpeaker->show();
+}
+
+void Editor::insertTimeStamp(const QTime& elapsedTime)
+{
+    auto blockNumber = textCursor().blockNumber();
+
+    if (m_blocks.size() <= blockNumber)
+        return;
+
+    m_blocks[blockNumber].timeStamp = elapsedTime;
+
+    dontUpdateWordEditor = true;
+    setContent();
+    QTextCursor cursor(document()->findBlockByNumber(blockNumber));
+    setTextCursor(cursor);
+    centerCursor();
+    dontUpdateWordEditor = false;
+
+}
+
+void Editor::insertTimeStampInWordEditor(const QTime& elapsedTime)
+{
+    auto blockNumber = textCursor().blockNumber();
+    auto wordEditorBlockNumber = m_wordEditor->textCursor().blockNumber();
+
+    if (m_blocks.size() <= blockNumber || m_blocks[blockNumber].words.size() <= wordEditorBlockNumber)
+        return;
+
+    m_blocks[blockNumber].words[wordEditorBlockNumber].timeStamp = elapsedTime;
+
+    updateWordEditor();
+
+    QTextCursor cursor(m_wordEditor->document()->findBlockByNumber(wordEditorBlockNumber));
+    m_wordEditor->setTextCursor(cursor);
+    m_wordEditor->centerCursor();
 }
 
 Editor::word Editor::fromWordEditor(qint64 blockNumber)

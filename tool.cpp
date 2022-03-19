@@ -127,6 +127,11 @@ void Tool::keyPressEvent(QKeyEvent *event)
         ui->m_editor->mergeDown();
     else if (event->key() == Qt::Key_W && event->modifiers() == Qt::ControlModifier)
         ui->m_wordEditor->setVisible(!ui->m_wordEditor->isVisible());
+    else if (event->key() == Qt::Key_I && event->modifiers() == Qt::ControlModifier)
+        if (m_activeEditor == ui->m_editor)
+            ui->m_editor->insertTimeStamp(player->elapsedTime());
+        else
+            ui->m_editor->insertTimeStampInWordEditor(player->elapsedTime());
     else
         QMainWindow::keyPressEvent(event);
 }
