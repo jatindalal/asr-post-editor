@@ -23,8 +23,16 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
     m_speakerCompleter->setWrapAround(false);
     m_speakerCompleter->setCompletionMode(QCompleter::PopupCompletion);
 
+    m_textCompleter = new QCompleter(this);
+    m_textCompleter->setWidget(this);
+    m_textCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+    m_textCompleter->setWrapAround(false);
+    m_textCompleter->setCompletionMode(QCompleter::PopupCompletion);
+
     connect(m_speakerCompleter, QOverload<const QString &>::of(&QCompleter::activated),
                      this, &Editor::insertSpeakerCompletion);
+    connect(m_textCompleter, QOverload<const QString &>::of(&QCompleter::activated),
+                     this, &Editor::insertTextCompletion);
 }
 
 void Highlighter::highlightBlock(const QString& text)
@@ -82,7 +90,8 @@ void Editor::keyPressEvent(QKeyEvent *event)
     if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_R)
         createChangeSpeakerDialog();
 
-    if (m_speakerCompleter && m_speakerCompleter->popup()->isVisible()) {
+    if ((m_speakerCompleter && m_speakerCompleter->popup()->isVisible())
+            || (m_textCompleter && m_textCompleter->popup()->isVisible())) {
         // The following keys are forwarded by the completer to the widget
        switch (event->key()) {
        case Qt::Key_Enter:
@@ -99,45 +108,74 @@ void Editor::keyPressEvent(QKeyEvent *event)
 
     TextEditor::keyPressEvent(event);
 
-    const bool shortcutPressed = (event->key() == Qt::Key_N && event->modifiers() == Qt::ControlModifier);
-    const bool hasModifier = (event->modifiers() != Qt::NoModifier);
-
-    QList<QString> speakers;
-    for (auto& a_block: qAsConst(m_blocks))
-        if (!speakers.contains(a_block.speaker) && a_block.speaker != "")
-            speakers.append(a_block.speaker);
-
-    m_speakerCompleter->setModel(new QStringListModel(speakers, m_speakerCompleter));
-
     QString blockText = textCursor().block().text();
     QString textTillCursor = blockText.left(textCursor().positionInBlock()).trimmed();
+    QString completionPrefix;
 
-    if (textTillCursor.count(" ") > 0 || textTillCursor.contains("]:") || textTillCursor.contains("]")
-            || !textTillCursor.size())
-        return;
+    const bool shortcutPressed = (event->key() == Qt::Key_N && event->modifiers() == Qt::ControlModifier);
+    const bool hasModifier = (event->modifiers() != Qt::NoModifier);
+    const bool containsSpeakerBraces = blockText.leftRef(blockText.indexOf(" ")).contains("]:");
 
-    QString completionPrefix = blockText.left(blockText.indexOf(" "));
 
-    if (!completionPrefix.contains("]:"))
-        return;
-
-    completionPrefix = completionPrefix.mid(1, completionPrefix.size() - 3);
     static QString eow("~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-="); // end of word
 
     if (!shortcutPressed && (hasModifier || event->text().isEmpty() || eow.contains(event->text().right(1)))) {
         m_speakerCompleter->popup()->hide();
+        m_textCompleter->popup()->hide();
         return;
     }
 
-    if (completionPrefix != m_speakerCompleter->completionPrefix()) {
-        m_speakerCompleter->setCompletionPrefix(completionPrefix);
-        m_speakerCompleter->popup()->setCurrentIndex(m_speakerCompleter->completionModel()->index(0, 0));
+    QCompleter *m_completer = nullptr;
+
+    if (!textTillCursor.count(" ") && !textTillCursor.contains("]:") && !textTillCursor.contains("]")
+            && textTillCursor.size() && containsSpeakerBraces) {
+        //complete speaker
+
+        m_completer = m_speakerCompleter;
+
+        completionPrefix = blockText.left(blockText.indexOf(" "));
+        completionPrefix = completionPrefix.mid(1, completionPrefix.size() - 3);
+
+        QList<QString> speakers;
+        for (auto& a_block: qAsConst(m_blocks))
+            if (!speakers.contains(a_block.speaker) && a_block.speaker != "")
+                speakers.append(a_block.speaker);
+
+        m_speakerCompleter->setModel(new QStringListModel(speakers, m_speakerCompleter));
+    }
+    else if (textTillCursor.count(" ") > 0) {
+        //complete text
+        if (m_blocks[textCursor().blockNumber()].timeStamp.isValid()
+                && textTillCursor.count(" ") == blockText.count(" "))
+            return;
+
+        QTextCursor tc = textCursor();
+        tc.select(QTextCursor::WordUnderCursor);
+        completionPrefix = tc.selectedText();
+
+        if (completionPrefix.size() < 2) {
+            m_textCompleter->popup()->hide();
+            return;
+        }
+
+        m_completer = m_textCompleter;
+    }
+    else
+        return;
+
+    if (!m_completer)
+        return;
+
+
+    if (completionPrefix != m_completer->completionPrefix()) {
+        m_completer->setCompletionPrefix(completionPrefix);
+        m_completer->popup()->setCurrentIndex(m_completer->completionModel()->index(0, 0));
     }
 
     QRect cr = cursorRect();
-    cr.setWidth(m_speakerCompleter->popup()->sizeHintForColumn(0)
-                + m_speakerCompleter->popup()->verticalScrollBar()->sizeHint().width());
-    m_speakerCompleter->complete(cr);
+    cr.setWidth(m_completer->popup()->sizeHintForColumn(0)
+                + m_completer->popup()->verticalScrollBar()->sizeHint().width());
+    m_completer->complete(cr);
 }
 
 void Editor::openTranscript()
@@ -161,7 +199,19 @@ void Editor::openTranscript()
         loadTranscriptData(m_file);
         setContent();
 
-        emit message("Opened transcript " + fileUrl->fileName());
+        if (m_transcriptLang == "sanskrit") {
+            m_textCompleter->setModel(modelFromFile(":/resources/sanskrit_wordlist.txt"));
+            m_textCompletionName = "text_sanskrit";
+        }
+        else {
+            m_textCompleter->setModel(modelFromFile(":/resources/english_wordlist.txt"));
+            m_textCompletionName = "text_english";
+        }
+
+        if (m_transcriptLang != "")
+            emit message("Opened transcript " + fileUrl->fileName() + " Language: " + m_transcriptLang);
+        else
+            emit message("Opened transcript " + fileUrl->fileName());
     }
 }
 
@@ -295,9 +345,12 @@ Editor::block Editor::fromEditor(qint64 blockNumber)
 void Editor::loadTranscriptData(QFile *file)
 {
     QXmlStreamReader reader(file);
+    m_transcriptLang = "";
     m_blocks.clear();
     if (reader.readNextStartElement()) {
         if (reader.name() == "transcript") {
+            m_transcriptLang = reader.attributes().value("lang").toString();
+
             while(reader.readNextStartElement()) {
                 if(reader.name() == "line") {
                     auto blockTimeStamp = getTime(reader.attributes().value("timestamp").toString());
@@ -393,6 +446,29 @@ void Editor::helpJumpToPlayer()
     }
 
     emit jumpToPlayer(timeToJump);
+}
+
+QAbstractItemModel* Editor::modelFromFile(const QString& fileName)
+{
+    QFile file(fileName);
+    if (!file.open(QFile::ReadOnly))
+        return new QStringListModel(m_textCompleter);
+
+#ifndef QT_NO_CURSOR
+    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+#endif
+    QStringList words;
+
+    while (!file.atEnd()) {
+        QByteArray line = file.readLine();
+        if (!line.isEmpty())
+            words << QString::fromUtf8(line.trimmed());
+    }
+
+#ifndef QT_NO_CURSOR
+    QGuiApplication::restoreOverrideCursor();
+#endif
+    return new QStringListModel(words, m_textCompleter);
 }
 
 void Editor::setContent()
@@ -815,5 +891,19 @@ void Editor::insertSpeakerCompletion(const QString& completion)
     }
 
     tc.insertText(completion.right(extra));
+    setTextCursor(tc);
+}
+
+void Editor::insertTextCompletion(const QString& completion)
+{
+    if (m_textCompleter->widget() != this)
+        return;
+    QTextCursor tc = textCursor();
+    int extra = completion.length() - m_textCompleter->completionPrefix().length();
+
+    tc.movePosition(QTextCursor::Left);
+    tc.movePosition(QTextCursor::EndOfWord);
+    tc.insertText(completion.right(extra));
+
     setTextCursor(tc);
 }

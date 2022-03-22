@@ -28,5 +28,4 @@ private:
     MediaPlayer *player = nullptr;
     Ui::Tool *ui;
     TextEditor *m_activeEditor = nullptr;
-
 };

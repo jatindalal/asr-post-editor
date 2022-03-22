@@ -9,6 +9,7 @@
 #include <QSyntaxHighlighter>
 #include <QTextDocument>
 #include <QCompleter>
+#include <QAbstractItemModel>
 
 class Highlighter;
 
@@ -56,6 +57,7 @@ private slots:
     void updateWordEditor();
     void changeSpeaker(const QString& newSpeaker, bool replaceAllOccurrences);
     void insertSpeakerCompletion(const QString& completion);
+    void insertTextCompletion(const QString& completion);
 
 private:
     QTime getTime(const QString& text);
@@ -66,15 +68,18 @@ private:
     void setContent();
     void saveXml(QFile* file);
     void helpJumpToPlayer();
+    QAbstractItemModel* modelFromFile(const QString& fileName);
 
     bool settingContent{false}, updatingWordEditor{false}, dontUpdateWordEditor{false};
     QFile* m_file = nullptr;
     QVector<block> m_blocks;
+    QString m_transcriptLang;
     Highlighter* m_highlighter = nullptr;
     qint64 highlightedBlock = -1, highlightedWord = -1;
     TextEditor* m_wordEditor = nullptr;
     ChangeSpeakerDialog* m_changeSpeaker = nullptr;
-    QCompleter* m_speakerCompleter;
+    QCompleter *m_speakerCompleter = nullptr, *m_textCompleter = nullptr;
+    QString m_textCompletionName;
 };
 
 
