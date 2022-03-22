@@ -512,6 +512,13 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
         return;
     }
 
+    qInfo() << "[Content Modified]"
+            << QString("position: %1").arg(position)
+            << QString("chars-removed: %1").arg(charsRemoved)
+            << QString("chars-added: %1").arg(charsAdded)
+            << QString("current-block-number: %1").arg(textCursor().blockNumber())
+            << QString("block-count-change: %1").arg(m_blocks.size() - blockCount());
+
     if (m_highlighter)
         delete m_highlighter;
     m_highlighter = new Highlighter(this->document());
