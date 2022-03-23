@@ -20,12 +20,14 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
 
     m_speakerCompleter = new QCompleter(this);
     m_speakerCompleter->setWidget(this);
+    m_speakerCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
     m_speakerCompleter->setCaseSensitivity(Qt::CaseInsensitive);
     m_speakerCompleter->setWrapAround(false);
     m_speakerCompleter->setCompletionMode(QCompleter::PopupCompletion);
 
     m_textCompleter = new QCompleter(this);
     m_textCompleter->setWidget(this);
+    m_textCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
     m_textCompleter->setCaseSensitivity(Qt::CaseInsensitive);
     m_textCompleter->setWrapAround(false);
     m_textCompleter->setCompletionMode(QCompleter::PopupCompletion);
