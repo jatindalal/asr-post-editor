@@ -2,6 +2,7 @@
 
 #include "texteditor.h"
 #include "changespeakerdialog.h"
+#include "timepropagationdialog.h"
 
 #include <QTime>
 #include <QXmlStreamReader>
@@ -48,6 +49,7 @@ public slots:
     void mergeUp();
     void mergeDown();
     void createChangeSpeakerDialog();
+    void createTimePropagationDialog();
     void insertTimeStamp(const QTime& elapsedTime);
     void insertTimeStampInWordEditor(const QTime& elapsedTime);
 
@@ -56,6 +58,7 @@ private slots:
     void wordEditorChanged(int position, int charsRemoved, int charsAdded);
     void updateWordEditor();
     void changeSpeaker(const QString& newSpeaker, bool replaceAllOccurrences);
+    void propagateTime(const QTime& time, int start, int end, bool negateTime);
     void insertSpeakerCompletion(const QString& completion);
     void insertTextCompletion(const QString& completion);
 
@@ -78,6 +81,7 @@ private:
     qint64 highlightedBlock = -1, highlightedWord = -1;
     TextEditor* m_wordEditor = nullptr;
     ChangeSpeakerDialog* m_changeSpeaker = nullptr;
+    TimePropagationDialog* m_propagateTime = nullptr;
     QCompleter *m_speakerCompleter = nullptr, *m_textCompleter = nullptr;
     QString m_textCompletionName;
 };

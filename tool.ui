@@ -115,6 +115,7 @@
     <addaction name="editor_toggleWords"/>
     <addaction name="separator"/>
     <addaction name="editor_changeSpeaker"/>
+    <addaction name="editor_propagateTime"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -261,6 +262,11 @@
   <action name="editor_changeSpeaker">
    <property name="text">
     <string>Change Speaker</string>
+   </property>
+  </action>
+  <action name="editor_propagateTime">
+   <property name="text">
+    <string>Propagate Time</string>
    </property>
   </action>
  </widget>

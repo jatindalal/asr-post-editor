@@ -7,6 +7,7 @@
 #include <QAbstractItemView>
 #include <QScrollBar>
 #include <QStringListModel>
+#include <QMessageBox>
 #include <QDebug>
 
 Editor::Editor(QWidget *parent) : TextEditor(parent)
@@ -89,6 +90,8 @@ void Editor::keyPressEvent(QKeyEvent *event)
 
     if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_R)
         createChangeSpeakerDialog();
+    else if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_T)
+        createTimePropagationDialog();
 
     if ((m_speakerCompleter && m_speakerCompleter->popup()->isVisible())
             || (m_textCompleter && m_textCompleter->popup()->isVisible())) {
@@ -740,6 +743,34 @@ void Editor::createChangeSpeakerDialog()
     m_changeSpeaker->show();
 }
 
+void Editor::createTimePropagationDialog()
+{
+    if (m_propagateTime || !m_blocks.size())
+        return;
+
+    m_propagateTime = new TimePropagationDialog(this);
+    m_propagateTime->setModal(true);
+
+    m_propagateTime->setBlockRange(textCursor().blockNumber() + 1, blockCount());
+
+    connect(m_propagateTime,
+            &TimePropagationDialog::accepted,
+            this,
+            [&]() {
+                propagateTime(m_propagateTime->time(),
+                              m_propagateTime->blockStart(),
+                              m_propagateTime->blockEnd(),
+                              m_propagateTime->negateTime());
+                delete m_propagateTime;
+                m_propagateTime = nullptr;
+            }
+    );
+    connect(m_propagateTime, &TimePropagationDialog::rejected, this, [&]() {delete m_propagateTime; m_propagateTime = nullptr;});
+    connect(m_propagateTime, &TimePropagationDialog::finished, this, [&]() {delete m_propagateTime; m_propagateTime = nullptr;});
+
+    m_propagateTime->show();
+}
+
 void Editor::insertTimeStamp(const QTime& elapsedTime)
 {
     auto blockNumber = textCursor().blockNumber();
@@ -878,6 +909,46 @@ void Editor::changeSpeaker(const QString& newSpeaker, bool replaceAllOccurrences
                 a_block.speaker = newSpeaker;
         }
     }
+
+    setContent();
+    QTextCursor cursor(document()->findBlockByNumber(blockNumber));
+    setTextCursor(cursor);
+    centerCursor();
+}
+
+void Editor::propagateTime(const QTime& time, int start, int end, bool negateTime)
+{
+    if (time.isNull()) {
+        QMessageBox errorBox(QMessageBox::Critical, "Error", "Invalid Time Selected", QMessageBox::Ok);
+        errorBox.exec();
+        return;
+    }
+    else if (start < 1 || end > blockCount() || start > end) {
+        QMessageBox errorBox(QMessageBox::Critical, "Error", "Invalid Block Range Selected", QMessageBox::Ok);
+        errorBox.exec();
+        return;
+    }
+
+    for (int i = start - 1; i < end; i++) {
+        auto& currentTimeStamp = m_blocks[i].timeStamp;
+
+        if (currentTimeStamp.isNull())
+            currentTimeStamp = QTime(0, 0, 0);
+
+        int secondsToAdd = time.hour() * 3600 + time.minute() * 60 + time.second();
+        int msecondsToAdd = time.msec();
+
+        if (negateTime) {
+            secondsToAdd = -secondsToAdd;
+            msecondsToAdd = -msecondsToAdd;
+        }
+
+        currentTimeStamp = currentTimeStamp.addMSecs(msecondsToAdd);
+        currentTimeStamp = currentTimeStamp.addSecs(secondsToAdd);
+
+    }
+
+    int blockNumber = textCursor().blockNumber();
 
     setContent();
     QTextCursor cursor(document()->findBlockByNumber(blockNumber));
