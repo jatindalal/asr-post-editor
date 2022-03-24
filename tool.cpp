@@ -88,7 +88,7 @@ Tool::Tool(QWidget *parent)
     connect(ui->m_editor, &Editor::jumpToPlayer, player, &MediaPlayer::setPositionToTime);
 
     // Connect position slider change to player position
-    connect(ui->slider_position, &QSlider::sliderMoved, player, [&](){player->setPosition(ui->slider_position->value());});
+    connect(ui->slider_position, &QSlider::sliderMoved, player, &MediaPlayer::setPosition);
 }
 
 Tool::~Tool()
