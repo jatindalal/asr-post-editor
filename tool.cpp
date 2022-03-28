@@ -12,6 +12,16 @@ Tool::Tool(QWidget *parent)
     player = new MediaPlayer(this);
     player->setVideoOutput(ui->m_videoWidget);
 
+    ui->splitter_tool->setCollapsible(0, false);
+    ui->splitter_tool->setCollapsible(1, false);
+    ui->splitter_tool->setSizes(QList<int>({static_cast<int>(0.15 * sizeHint().height()),
+                                            static_cast<int>(0.85 * sizeHint().height())}));
+
+    ui->splitter_editor->setCollapsible(0, false);
+    ui->splitter_editor->setCollapsible(1, false);
+    ui->splitter_editor->setSizes(QList<int>({static_cast<int>(0.7 * sizeHint().height()),
+                                            static_cast<int>(0.3 * sizeHint().height())}));
+
     m_activeEditor = ui->m_editor;
 
     ui->m_editor->installEventFilter(this);

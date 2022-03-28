@@ -19,19 +19,24 @@ public:
 
     ~ChangeSpeakerDialog() {delete ui;}
 
-    QString speaker() 
+    QString speaker() const
     {
         return ui->comboBox_speaker->currentText();
     }
     
-    bool replaceAll() 
+    bool replaceAll() const
     {
         return ui->checkBox_changeAllOccurences->isChecked();
     }
     
-    void addItems(const QStringList& speakers) 
+    void addItems(const QStringList& speakers) const
     {
         ui->comboBox_speaker->addItems(speakers);
+    }
+
+    void setCurrentSpeaker(const QString& speakerName) const
+    {
+        ui->label_currentSpeaker->setText(speakerName);
     }
 
 private:

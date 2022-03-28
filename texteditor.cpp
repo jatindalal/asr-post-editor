@@ -37,7 +37,6 @@ void TextEditor::findReplace()
         return;
 
     m_findReplace = new FindReplaceDialog(this);
-    m_findReplace->setModal(true);
 
     connect(m_findReplace, &FindReplaceDialog::message, this, &TextEditor::message);
     connect(m_findReplace, &FindReplaceDialog::destroyed, this, [&]() {m_findReplace = nullptr;});

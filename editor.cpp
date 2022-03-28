@@ -716,7 +716,7 @@ void Editor::mergeDown()
 
 void Editor::createChangeSpeakerDialog()
 {
-    if (m_changeSpeaker)
+    if (m_changeSpeaker || !m_blocks.size())
         return;
 
     m_changeSpeaker = new ChangeSpeakerDialog(this);
@@ -727,6 +727,7 @@ void Editor::createChangeSpeakerDialog()
         speakers.insert(a_block.speaker);
 
     m_changeSpeaker->addItems(speakers.values());
+    m_changeSpeaker->setCurrentSpeaker(m_blocks.at(textCursor().blockNumber()).speaker);
 
     connect(m_changeSpeaker,
             &ChangeSpeakerDialog::accepted,

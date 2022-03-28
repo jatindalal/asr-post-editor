@@ -20,7 +20,7 @@ FindReplaceDialog::FindReplaceDialog(QPlainTextEdit *parentEditor)
     QTextCursor textCursor = m_Editor->textCursor();
     if (textCursor.hasSelection())
         ui->text_find->setText(textCursor.selectedText());
-    textCursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor,1);
+    textCursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
     m_Editor->setTextCursor(textCursor);
 }
 
