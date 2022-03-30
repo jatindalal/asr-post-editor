@@ -92,6 +92,10 @@ void Editor::keyPressEvent(QKeyEvent *event)
         createChangeSpeakerDialog();
     else if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_T)
         createTimePropagationDialog();
+    else if (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier) && event->key() == Qt::Key_Up)
+        speakerWiseJump("up");
+    else if (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier) && event->key() == Qt::Key_Down)
+        speakerWiseJump("down");
 
     if ((m_speakerCompleter && m_speakerCompleter->popup()->isVisible())
             || (m_textCompleter && m_textCompleter->popup()->isVisible())) {
@@ -805,6 +809,46 @@ void Editor::insertTimeStampInWordEditor(const QTime& elapsedTime)
     QTextCursor cursor(m_wordEditor->document()->findBlockByNumber(wordEditorBlockNumber));
     m_wordEditor->setTextCursor(cursor);
     m_wordEditor->centerCursor();
+}
+
+void Editor::speakerWiseJump(const QString& jumpDirection)
+{
+    auto& blockNumber = highlightedBlock;
+
+    if (blockNumber == -1)
+        return;
+
+    auto speakerName = m_blocks[blockNumber].speaker;
+    int blockToJump{-1};
+
+    if (jumpDirection == "up" && blockNumber != 0) {
+        for (int i = blockNumber - 1; i >= 0; i--)
+            if (speakerName == m_blocks[i].speaker) {
+                blockToJump = i;
+                break;
+            }
+    }
+    else if (jumpDirection == "down") {
+        for (int i = blockNumber + 1; i < m_blocks.size(); i++)
+            if (speakerName == m_blocks[i].speaker) {
+                blockToJump = i;
+                break;
+            }
+    }
+
+    if (blockToJump == -1)
+        return;
+
+    QTime timeToJump(0, 0);
+
+    for (int i = blockToJump - 1; i >= 0; i--) {
+        if (m_blocks[i].timeStamp.isValid()) {
+            timeToJump = m_blocks[i].timeStamp;
+            break;
+        }
+    }
+
+    emit jumpToPlayer(timeToJump);
 }
 
 Editor::word Editor::fromWordEditor(qint64 blockNumber)
