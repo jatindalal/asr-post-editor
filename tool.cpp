@@ -138,6 +138,18 @@ void Tool::keyPressEvent(QKeyEvent *event)
         ui->m_editor->mergeDown();
     else if (event->key() == Qt::Key_W && event->modifiers() == Qt::ControlModifier)
         ui->m_wordEditor->setVisible(!ui->m_wordEditor->isVisible());
+    else if (event->key() == Qt::Key_Up && event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier))
+        ui->m_editor->speakerWiseJump("up");
+    else if (event->key() == Qt::Key_Down && event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier))
+        ui->m_editor->speakerWiseJump("down");
+    else if (event->key() == Qt::Key_Left && event->modifiers() == Qt::AltModifier)
+        ui->m_editor->wordWiseJump("left");
+    else if (event->key() == Qt::Key_Right && event->modifiers() == Qt::AltModifier)
+        ui->m_editor->wordWiseJump("right");
+    else if (event->key() == Qt::Key_Up && event->modifiers() == Qt::AltModifier )
+        ui->m_editor->blockWiseJump("up");
+    else if (event->key() == Qt::Key_Down && event->modifiers() == Qt::AltModifier)
+        ui->m_editor->blockWiseJump("down");
     else if (event->key() == Qt::Key_I && event->modifiers() == Qt::ControlModifier)
         if (m_activeEditor == ui->m_editor)
             ui->m_editor->insertTimeStamp(player->elapsedTime());

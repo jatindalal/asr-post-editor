@@ -92,14 +92,6 @@ void Editor::keyPressEvent(QKeyEvent *event)
         createChangeSpeakerDialog();
     else if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_T)
         createTimePropagationDialog();
-    else if (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier) && event->key() == Qt::Key_Up)
-        speakerWiseJump("up");
-    else if (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier) && event->key() == Qt::Key_Down)
-        speakerWiseJump("down");
-    else if (event->modifiers() == Qt::AltModifier && event->key() == Qt::Key_Left)
-        wordWiseJump("left");
-    else if (event->modifiers() == Qt::AltModifier && event->key() == Qt::Key_Right)
-        wordWiseJump("right");
 
     if ((m_speakerCompleter && m_speakerCompleter->popup()->isVisible())
             || (m_textCompleter && m_textCompleter->popup()->isVisible())) {
@@ -910,6 +902,40 @@ void Editor::wordWiseJump(const QString& jumpDirection)
     }
 
     emit jumpToPlayer(timeToJump);
+}
+
+
+void Editor::blockWiseJump(const QString& jumpDirection)
+{
+    if (highlightedBlock == -1)
+        return;
+
+    int blockToJump{-1};
+
+    if (jumpDirection == "up")
+        blockToJump = highlightedBlock - 1;
+    else if (jumpDirection == "down")
+        blockToJump = highlightedBlock + 1;
+
+    if (blockToJump == -1 || blockToJump == blockCount())
+        return;
+
+    QTime timeToJump;
+
+    if (jumpDirection == "up") {
+        timeToJump = QTime(0, 0);
+        for (int i = blockToJump - 1; i >= 0; i--) {
+            if (m_blocks[i].timeStamp.isValid()) {
+                timeToJump = m_blocks[i].timeStamp;
+                break;
+            }
+        }
+    }
+    else if (jumpDirection == "down")
+        timeToJump = m_blocks[highlightedBlock].timeStamp;
+
+    emit jumpToPlayer(timeToJump);
+
 }
 
 Editor::word Editor::fromWordEditor(qint64 blockNumber)
