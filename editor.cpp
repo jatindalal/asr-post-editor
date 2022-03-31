@@ -96,6 +96,10 @@ void Editor::keyPressEvent(QKeyEvent *event)
         speakerWiseJump("up");
     else if (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier) && event->key() == Qt::Key_Down)
         speakerWiseJump("down");
+    else if (event->modifiers() == Qt::AltModifier && event->key() == Qt::Key_Left)
+        wordWiseJump("left");
+    else if (event->modifiers() == Qt::AltModifier && event->key() == Qt::Key_Right)
+        wordWiseJump("right");
 
     if ((m_speakerCompleter && m_speakerCompleter->popup()->isVisible())
             || (m_textCompleter && m_textCompleter->popup()->isVisible())) {
@@ -815,13 +819,15 @@ void Editor::speakerWiseJump(const QString& jumpDirection)
 {
     auto& blockNumber = highlightedBlock;
 
-    if (blockNumber == -1)
+    if (blockNumber == -1) {
+        emit message("Highlighted block not present");
         return;
+    }
 
     auto speakerName = m_blocks[blockNumber].speaker;
     int blockToJump{-1};
 
-    if (jumpDirection == "up" && blockNumber != 0) {
+    if (jumpDirection == "up") {
         for (int i = blockNumber - 1; i >= 0; i--)
             if (speakerName == m_blocks[i].speaker) {
                 blockToJump = i;
@@ -836,8 +842,10 @@ void Editor::speakerWiseJump(const QString& jumpDirection)
             }
     }
 
-    if (blockToJump == -1)
+    if (blockToJump == -1) {
+        emit message("Couldn't find a block to jump");
         return;
+    }
 
     QTime timeToJump(0, 0);
 
@@ -846,6 +854,59 @@ void Editor::speakerWiseJump(const QString& jumpDirection)
             timeToJump = m_blocks[i].timeStamp;
             break;
         }
+    }
+
+    emit jumpToPlayer(timeToJump);
+}
+
+void Editor::wordWiseJump(const QString& jumpDirection)
+{
+    auto& wordNumber = highlightedWord;
+
+    if (highlightedBlock == -1 || wordNumber == -1) {
+        emit message("Highlighted block or word not present");
+        return;
+    }
+
+    auto& highlightedBlockWords = m_blocks[highlightedBlock].words;
+    QTime timeToJump;
+    int wordToJump{-1};
+
+    if (jumpDirection == "left")
+        wordToJump = wordNumber - 1;
+    else if (jumpDirection == "right")
+        wordToJump = wordNumber + 1;
+
+    if (wordToJump < 0 || wordToJump >= highlightedBlockWords.size()) {
+        emit message("Can't jump, end of block reached!", 2000);
+        return;
+    }
+
+    if (jumpDirection == "left") {
+        if (wordToJump == 0){
+            timeToJump = QTime(0, 0);
+            for (int i = highlightedBlock - 1; i >= 0; i--) {
+                if (m_blocks[i].timeStamp.isValid()) {
+                    timeToJump = m_blocks[i].timeStamp;
+                    break;
+                }
+            }
+        }
+        else {
+            for (int i = wordToJump - 1; i >= 0; i--)
+                if (highlightedBlockWords[i].timeStamp.isValid()) {
+                    timeToJump = highlightedBlockWords[i].timeStamp;
+                    break;
+                }
+        }
+    }
+    
+    if (jumpDirection == "right")
+        timeToJump = highlightedBlockWords[wordToJump - 1].timeStamp;
+
+    if (timeToJump.isNull()) {
+        emit message("Couldn't find a word to jump to");
+        return;
     }
 
     emit jumpToPlayer(timeToJump);

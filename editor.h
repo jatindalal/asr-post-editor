@@ -53,6 +53,7 @@ public slots:
     void insertTimeStamp(const QTime& elapsedTime);
     void insertTimeStampInWordEditor(const QTime& elapsedTime);
     void speakerWiseJump(const QString& jumpDirection);
+    void wordWiseJump(const QString& jumpDirection);
 
 private slots:
     void contentChanged(int position, int charsRemoved, int charsAdded);
