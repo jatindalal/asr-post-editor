@@ -22,6 +22,8 @@ Tool::Tool(QWidget *parent)
     ui->splitter_editor->setSizes(QList<int>({static_cast<int>(0.7 * sizeHint().height()),
                                             static_cast<int>(0.3 * sizeHint().height())}));
 
+
+
     m_activeEditor = ui->m_editor;
 
     ui->m_editor->installEventFilter(this);
@@ -120,25 +122,8 @@ void Tool::handleMediaPlayerError()
 
 void Tool::keyPressEvent(QKeyEvent *event)
 {
-    if (event->key() == Qt::Key_Space && event->modifiers() == Qt::ControlModifier)
-        player->togglePlayback();
-    else if (event->key() == Qt::Key_Period && event->modifiers() == Qt::ControlModifier)
-        player->seek(5);
-    else if (event->key() == Qt::Key_Comma && event->modifiers() == Qt::ControlModifier)
-        player->seek(-5);
-    else if (event->key() == Qt::Key_Semicolon && event->modifiers() == Qt::ControlModifier)
-        ui->m_editor->splitLine(player->elapsedTime());
-    else if (event->key() == Qt::Key_J && event->modifiers() == Qt::ControlModifier)
-        ui->m_editor->jumpToHighlightedLine();
-    else if (event->key() == Qt::Key_S && event->modifiers() == Qt::ControlModifier)
-        ui->m_editor->saveTranscript();
-    else if (event->key() == Qt::Key_Up && event->modifiers() == Qt::ControlModifier)
-        ui->m_editor->mergeUp();
-    else if (event->key() == Qt::Key_Down && event->modifiers() == Qt::ControlModifier)
-        ui->m_editor->mergeDown();
-    else if (event->key() == Qt::Key_W && event->modifiers() == Qt::ControlModifier)
-        ui->m_wordEditor->setVisible(!ui->m_wordEditor->isVisible());
-    else if (event->key() == Qt::Key_Up && event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier))
+
+     if (event->key() == Qt::Key_Up && event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier))
         ui->m_editor->speakerWiseJump("up");
     else if (event->key() == Qt::Key_Down && event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier))
         ui->m_editor->speakerWiseJump("down");
