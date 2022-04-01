@@ -55,6 +55,7 @@ void Highlighter::highlightBlock(const QString& text)
         int timeStampStart = QRegularExpression(R"(\[(\d?\d:)?[0-5]?\d:[0-5]?\d(\.\d\d?\d?)?])").match(text).capturedStart();
 
         QTextCharFormat format;
+
         format.setForeground(QColor(Qt::blue).lighter(120));
         setFormat(0, speakerEnd, format);
 
@@ -71,8 +72,9 @@ void Highlighter::highlightBlock(const QString& text)
             for (int i=0; i < wordToHighlight; i++) start += (words[i].size() + 1);
             int count = words[wordToHighlight].size();
 
-            format.setBackground(Qt::yellow);
-            format.setForeground(Qt::black);
+            format.setFontUnderline(true);
+            format.setUnderlineColor(Qt::green);
+            format.setForeground(Qt::green);
             setFormat(start + 1, count, format);
         }
     }
