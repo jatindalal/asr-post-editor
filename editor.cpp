@@ -13,7 +13,7 @@
 Editor::Editor(QWidget *parent) : TextEditor(parent)
 {
     timeStampExp = QRegularExpression(R"(\[(\d?\d:)?[0-5]?\d:[0-5]?\d(\.\d\d?\d?)?])");
-    speakerExp = QRegularExpression(R"(\[[\w\.]*]:)");
+    speakerExp = QRegularExpression(R"(\[.*]:)");
 
     connect(this->document(), &QTextDocument::contentsChange, this, &Editor::contentChanged);
     connect(this, &Editor::cursorPositionChanged, this, &Editor::updateWordEditor);
@@ -48,7 +48,7 @@ void Highlighter::highlightBlock(const QString& text)
         return;
     else if (currentBlock().blockNumber() == blockToHighlight) {
         int speakerEnd = 0;
-        auto speakerMatch = QRegularExpression(R"(\[[\w\.]*]:)").match(text);
+        auto speakerMatch = QRegularExpression(R"(\[.*]:)").match(text);
         if (speakerMatch.hasMatch())
             speakerEnd = speakerMatch.capturedEnd();
 
