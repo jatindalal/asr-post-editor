@@ -2,6 +2,7 @@
 #include "./ui_tool.h"
 
 #include "mediaplayer.h"
+#include "keyboardshortcutguide.h"
 
 Tool::Tool(QWidget *parent)
     : QMainWindow(parent)
@@ -99,6 +100,8 @@ Tool::Tool(QWidget *parent)
     connect(ui->m_editor, &Editor::message, this->statusBar(), &QStatusBar::showMessage);
     connect(ui->m_editor, &Editor::jumpToPlayer, player, &MediaPlayer::setPositionToTime);
 
+    connect(ui->help_keyboardShortcuts, &QAction::triggered, this, &Tool::createKeyboardShortcutGuide);
+
     // Connect position slider change to player position
     connect(ui->slider_position, &QSlider::sliderMoved, player, &MediaPlayer::setPosition);
 }
@@ -154,3 +157,12 @@ bool Tool::eventFilter(QObject *watched, QEvent *event)
     }
     return false;
 }
+
+void Tool::createKeyboardShortcutGuide()
+{
+    auto help_keyshortcuts = new KeyboardShortcutGuide(this);
+
+    help_keyshortcuts->setAttribute(Qt::WA_DeleteOnClose);
+    help_keyshortcuts->show();
+}
+

@@ -81,7 +81,7 @@
      <x>0</x>
      <y>0</y>
      <width>1040</width>
-     <height>38</height>
+     <height>28</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -137,11 +137,18 @@
     <addaction name="view_zoomIn"/>
     <addaction name="view_zoomOut"/>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="help_keyboardShortcuts"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuView"/>
    <addaction name="menuMedia_Player"/>
    <addaction name="menuEditor"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="close">
@@ -327,6 +334,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+T</string>
+   </property>
+  </action>
+  <action name="help_keyboardShortcuts">
+   <property name="text">
+    <string>Keyboard Shortcuts</string>
    </property>
   </action>
  </widget>

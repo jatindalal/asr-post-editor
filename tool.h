@@ -23,6 +23,7 @@ protected:
 
 private slots:
     void handleMediaPlayerError();
+    void createKeyboardShortcutGuide();
 
 private:
     MediaPlayer *player = nullptr;
