@@ -29,6 +29,7 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
     m_textCompleter->setCaseSensitivity(Qt::CaseInsensitive);
     m_textCompleter->setWrapAround(false);
     m_textCompleter->setCompletionMode(QCompleter::PopupCompletion);
+    m_textCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
 
     connect(m_speakerCompleter, QOverload<const QString &>::of(&QCompleter::activated),
                      this, &Editor::insertSpeakerCompletion);
