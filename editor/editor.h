@@ -1,10 +1,10 @@
 #pragma once
 
+#include "blockandword.h"
 #include "texteditor.h"
 #include "changespeakerdialog.h"
 #include "timepropagationdialog.h"
 
-#include <QTime>
 #include <QXmlStreamReader>
 #include <QRegularExpression>
 #include <QSyntaxHighlighter>
@@ -17,9 +17,6 @@ class Highlighter;
 class Editor : public TextEditor
 {
     Q_OBJECT
-
-    struct word;
-    struct block;
 
 public:
     explicit Editor(QWidget *parent = nullptr);
@@ -90,33 +87,6 @@ private:
 };
 
 
-struct Editor::word
-{
-    QTime timeStamp;
-    QString text;
-
-    inline bool operator==(word w) const
-    {
-        if (w.timeStamp == timeStamp && w.text == text)
-            return true;
-        return false;
-    }
-};
-
-struct Editor::block
-{
-    QTime timeStamp;
-    QString text;
-    QString speaker;
-    QVector<word> words;
-
-    inline bool operator==(block b) const
-    {
-          if(b.timeStamp==timeStamp && b.text==text && b.speaker==speaker && b.words==words)
-             return true;
-          return false;
-    }
-};
 
 
 class Highlighter : public QSyntaxHighlighter

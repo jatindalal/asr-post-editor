@@ -302,14 +302,14 @@ QTime Editor::getTime(const QString& text)
     return {};
 }
 
-Editor::word Editor::makeWord(const QTime& t, const QString& s)
+word Editor::makeWord(const QTime& t, const QString& s)
 {
     word w = {t, s};
     return w;
 }
 
 // TODO: Space in a speaker name breaks speaker detection
-Editor::block Editor::fromEditor(qint64 blockNumber)
+block Editor::fromEditor(qint64 blockNumber)
 {
     QTime timeStamp;
     QVector<word> words;
@@ -941,7 +941,7 @@ void Editor::blockWiseJump(const QString& jumpDirection)
 
 }
 
-Editor::word Editor::fromWordEditor(qint64 blockNumber)
+word Editor::fromWordEditor(qint64 blockNumber)
 {
     QTime timeStamp;
     QString text, blockText(m_wordEditor->document()->findBlockByNumber(blockNumber).text());
