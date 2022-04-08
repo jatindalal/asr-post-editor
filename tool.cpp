@@ -1,8 +1,7 @@
 #include "tool.h"
 #include "./ui_tool.h"
 
-#include "mediaplayer.h"
-#include "keyboardshortcutguide.h"
+#include "editor/keyboardshortcutguide.h"
 
 Tool::Tool(QWidget *parent)
     : QMainWindow(parent)

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <QMainWindow>
-#include "mediaplayer.h"
-#include "texteditor.h"
+#include "mediaplayer/mediaplayer.h"
+#include "editor/texteditor.h"
 
 
 QT_BEGIN_NAMESPACE

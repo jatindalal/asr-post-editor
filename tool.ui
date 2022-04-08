@@ -346,24 +346,24 @@
   <customwidget>
    <class>VideoWidget</class>
    <extends>QWidget</extends>
-   <header>videowidget.h</header>
+   <header>mediaplayer/videowidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>PlayerControls</class>
    <extends>QWidget</extends>
-   <header>playercontrols.h</header>
+   <header>mediaplayer/playercontrols.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>Editor</class>
    <extends>QPlainTextEdit</extends>
-   <header>editor.h</header>
+   <header>editor/editor.h</header>
   </customwidget>
   <customwidget>
    <class>TextEditor</class>
    <extends>QWidget</extends>
-   <header>texteditor.h</header>
+   <header>editor/texteditor.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
