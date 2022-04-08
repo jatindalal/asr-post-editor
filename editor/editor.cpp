@@ -206,11 +206,13 @@ void Editor::openTranscript()
         setContent();
 
         if (m_transcriptLang == "sanskrit") {
-            m_textCompleter->setModel(modelFromFile(":/resources/sanskrit_wordlist.txt"));
+            m_dictionary = listFromFile(":/wordlists/sanskrit_wordlist.txt");
+            m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
             m_textCompletionName = "text_sanskrit";
         }
-        else {
-            m_textCompleter->setModel(modelFromFile(":/resources/english_wordlist.txt"));
+        else{
+            m_dictionary = listFromFile(":/wordlists/english_wordlist.txt");
+            m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
             m_textCompletionName = "text_english";
         }
 
@@ -454,16 +456,13 @@ void Editor::helpJumpToPlayer()
     emit jumpToPlayer(timeToJump);
 }
 
-QAbstractItemModel* Editor::modelFromFile(const QString& fileName)
+QStringList Editor::listFromFile(const QString& fileName)
 {
+    QStringList words;
+
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly))
-        return new QStringListModel(m_textCompleter);
-
-#ifndef QT_NO_CURSOR
-    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-#endif
-    QStringList words;
+        return {};
 
     while (!file.atEnd()) {
         QByteArray line = file.readLine();
@@ -471,10 +470,7 @@ QAbstractItemModel* Editor::modelFromFile(const QString& fileName)
             words << QString::fromUtf8(line.trimmed());
     }
 
-#ifndef QT_NO_CURSOR
-    QGuiApplication::restoreOverrideCursor();
-#endif
-    return new QStringListModel(words, m_textCompleter);
+    return words;
 }
 
 void Editor::setContent()
@@ -512,7 +508,7 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
     // If chars aren't added or deleted then return
     if (!(charsAdded || charsRemoved) || settingContent)
         return;
-    else if (!m_blocks.size()) { // If block data is empty (i.e no file opened) just fill them from editor
+    else if (!m_blocks.size()) { // If block data is empty (i.e. no file opened) just fill them from editor
         for (int i = 0; i < document()->blockCount(); i++)
             m_blocks.append(fromEditor(i));
         return;

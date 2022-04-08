@@ -63,15 +63,15 @@ private slots:
     void insertTextCompletion(const QString& completion);
 
 private:
-    QTime getTime(const QString& text);
+    static QTime getTime(const QString& text);
     block fromEditor(qint64 blockNumber);
-    word makeWord(const QTime& t, const QString& s);
+    static word makeWord(const QTime& t, const QString& s);
     word fromWordEditor(qint64 blockNumber);
     void loadTranscriptData(QFile* file);
     void setContent();
     void saveXml(QFile* file);
     void helpJumpToPlayer();
-    QAbstractItemModel* modelFromFile(const QString& fileName);
+    QStringList listFromFile(const QString& fileName);
 
     bool settingContent{false}, updatingWordEditor{false}, dontUpdateWordEditor{false};
     QFile* m_file = nullptr;
@@ -84,6 +84,7 @@ private:
     TimePropagationDialog* m_propagateTime = nullptr;
     QCompleter *m_speakerCompleter = nullptr, *m_textCompleter = nullptr;
     QString m_textCompletionName;
+    QStringList m_dictionary;
 };
 
 
@@ -93,7 +94,7 @@ class Highlighter : public QSyntaxHighlighter
 {
     Q_OBJECT
 public:
-    Highlighter(QTextDocument *parent = nullptr) : QSyntaxHighlighter(parent) {};
+    explicit Highlighter(QTextDocument *parent = nullptr) : QSyntaxHighlighter(parent) {};
 
     void clearHighlight()
     {
@@ -110,8 +111,7 @@ public:
         wordToHighlight = wordNumber;
         rehighlight();
     }
-
-    void setInvalidBlocks(const QList<int> invalidBlocks)
+    void setInvalidBlocks(const QList<int>& invalidBlocks)
     {
         invalidBlockNumbers = invalidBlocks;
         rehighlight();

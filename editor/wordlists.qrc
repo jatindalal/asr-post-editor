@@ -1,0 +1,6 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="/">
+   <file>wordlists/sanskrit_wordlist.txt</file>
+   <file>wordlists/english_wordlist.txt</file>
+</qresource>
+</RCC>
