@@ -136,6 +136,7 @@
     </property>
     <addaction name="view_zoomIn"/>
     <addaction name="view_zoomOut"/>
+    <addaction name="view_font"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -339,6 +340,11 @@
   <action name="help_keyboardShortcuts">
    <property name="text">
     <string>Keyboard Shortcuts</string>
+   </property>
+  </action>
+  <action name="view_font">
+   <property name="text">
+    <string>Editor Font</string>
    </property>
   </action>
  </widget>

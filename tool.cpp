@@ -1,7 +1,8 @@
 #include "tool.h"
 #include "./ui_tool.h"
-
 #include "editor/keyboardshortcutguide.h"
+
+#include <QFontDialog>
 
 Tool::Tool(QWidget *parent)
     : QMainWindow(parent)
@@ -82,6 +83,7 @@ Tool::Tool(QWidget *parent)
     // Connect view menu actions
     connect(ui->view_zoomIn, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->zoomIn();});
     connect(ui->view_zoomOut, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->zoomOut();});
+    connect(ui->view_font, &QAction::triggered, this, &Tool::changeEditorFont);
 
     // Connect Editor menu actions and editor controls
     ui->m_editor->setWordEditor(ui->m_wordEditor);
@@ -163,5 +165,16 @@ void Tool::createKeyboardShortcutGuide()
 
     help_keyshortcuts->setAttribute(Qt::WA_DeleteOnClose);
     help_keyshortcuts->show();
+}
+
+void Tool::changeEditorFont()
+{
+    bool fontSelected;
+    QFont font = QFontDialog::getFont(&fontSelected, QFont( "Arial", 18 ), this, tr("Pick a font") );
+
+    if (fontSelected) {
+        ui->m_editor->document()->setDefaultFont(font);
+        ui->m_wordEditor->document()->setDefaultFont(font);
+    }
 }
 

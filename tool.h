@@ -24,6 +24,7 @@ protected:
 private slots:
     void handleMediaPlayerError();
     void createKeyboardShortcutGuide();
+    void changeEditorFont();
 
 private:
     MediaPlayer *player = nullptr;
