@@ -8,6 +8,7 @@
 #include <QScrollBar>
 #include <QStringListModel>
 #include <QMessageBox>
+#include <algorithm>
 #include <QDebug>
 
 Editor::Editor(QWidget *parent) : TextEditor(parent)
@@ -45,6 +46,30 @@ void Highlighter::highlightBlock(const QString& text)
         setFormat(0, text.size(), format);
         return;
     }
+    if (invalidWords.contains(currentBlock().blockNumber())) {
+        auto invalidWordNumbers = invalidWords.values(currentBlock().blockNumber());
+        auto speakerEnd = 0;
+        auto speakerMatch = QRegularExpression(R"(\[.*]:)").match(text);
+        if (speakerMatch.hasMatch())
+            speakerEnd = speakerMatch.capturedEnd();
+
+        auto words = text.mid(speakerEnd + 1).split(" ");
+        int start = speakerEnd;
+
+        QTextCharFormat format;
+        format.setFontUnderline(true);
+        format.setUnderlineColor(Qt::red);
+        format.setUnderlineStyle(QTextCharFormat::SpellCheckUnderline);
+
+        for (int i = 0; i < words.size() - 1; i++) {
+            if (!invalidWordNumbers.contains(i))
+                continue;
+            for (int j = 0; j < i; j++) start += (words[j].size() + 1);
+            int count = words[i].size();
+            setFormat(start + 1, count, format);
+            start = speakerEnd;
+        }
+    }
     if (blockToHighlight == -1)
         return;
     else if (currentBlock().blockNumber() == blockToHighlight) {
@@ -75,6 +100,7 @@ void Highlighter::highlightBlock(const QString& text)
 
             format.setFontUnderline(true);
             format.setUnderlineColor(Qt::green);
+            format.setUnderlineStyle(QTextCharFormat::DashUnderline);
             format.setForeground(Qt::green);
             setFormat(start + 1, count, format);
         }
@@ -203,7 +229,6 @@ void Editor::openTranscript()
         }
 
         loadTranscriptData(m_file);
-        setContent();
 
         if (m_transcriptLang == "sanskrit") {
             m_dictionary = listFromFile(":/wordlists/sanskrit_wordlist.txt");
@@ -215,6 +240,8 @@ void Editor::openTranscript()
             m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
             m_textCompletionName = "text_english";
         }
+
+        setContent();
 
         if (m_transcriptLang != "")
             emit message("Opened transcript " + fileUrl->fileName() + " Language: " + m_transcriptLang);
@@ -482,8 +509,8 @@ void Editor::setContent()
             delete m_highlighter;
 
         QString content("");
-        for (auto& block: qAsConst(m_blocks)) {
-            auto blockText = "[" + block.speaker + "]: " + block.text + " [" + block.timeStamp.toString("hh:mm:ss.zzz") + "]";
+        for (auto& a_block: qAsConst(m_blocks)) {
+            auto blockText = "[" + a_block.speaker + "]: " + a_block.text + " [" + a_block.timeStamp.toString("hh:mm:ss.zzz") + "]";
             content.append(blockText + "\n");
         }
         setPlainText(content.trimmed());
@@ -491,11 +518,23 @@ void Editor::setContent()
         m_highlighter = new Highlighter(document());
 
         QList<int> invalidBlocks;
-        for (int i = 0; i < m_blocks.size(); i++)
+        QMultiMap<int, int> invalidWords;
+        for (int i = 0; i < m_blocks.size(); i++) {
             if (m_blocks[i].timeStamp.isNull())
                 invalidBlocks.append(i);
+            else {
+                for (int j = 0; j < m_blocks[i].words.size(); j++) {
+                    auto wordText = m_blocks[i].words[j].text.toLower();
+                    if (!std::binary_search(m_dictionary.begin(),
+                                            m_dictionary.end(),
+                                            wordText))
+                        invalidWords.insert(i, j);
+                }
+            }
+        }
 
         m_highlighter->setInvalidBlocks(invalidBlocks);
+        m_highlighter->setInvalidWords(invalidWords);
         m_highlighter->setBlockToHighlight(highlightedBlock);
         m_highlighter->setWordToHighlight(highlightedWord);
 
@@ -595,10 +634,22 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
     m_highlighter->setWordToHighlight(highlightedWord);
 
     QList<int> invalidBlocks;
-    for (int i = 0; i < m_blocks.size(); i++)
+    QMultiMap<int, int> invalidWords;
+    for (int i = 0; i < m_blocks.size(); i++) {
         if (m_blocks[i].timeStamp.isNull())
             invalidBlocks.append(i);
+        else {
+            for (int j = 0; j < m_blocks[i].words.size(); j++) {
+                auto wordText = m_blocks[i].words[j].text.toLower();
+                if (!std::binary_search(m_dictionary.begin(),
+                                        m_dictionary.end(),
+                                        wordText))
+                    invalidWords.insert(i, j);
+            }
+        }
+    }
     m_highlighter->setInvalidBlocks(invalidBlocks);
+    m_highlighter->setInvalidWords(invalidWords);
 
     updateWordEditor();
 }

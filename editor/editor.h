@@ -116,6 +116,11 @@ public:
         invalidBlockNumbers = invalidBlocks;
         rehighlight();
     }
+    void setInvalidWords(const QMultiMap<int, int>& invalidWordsMap)
+    {
+        invalidWords = invalidWordsMap;
+        rehighlight();
+    }
     void clearInvalidBlocks()
     {
         invalidBlockNumbers.clear();
@@ -127,5 +132,6 @@ private:
     int blockToHighlight{-1};
     int wordToHighlight{-1};
     QList<int> invalidBlockNumbers;
+    QMultiMap<int, int> invalidWords;
 };
 
