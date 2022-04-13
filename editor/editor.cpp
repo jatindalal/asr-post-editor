@@ -18,6 +18,12 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
 
     connect(this->document(), &QTextDocument::contentsChange, this, &Editor::contentChanged);
     connect(this, &Editor::cursorPositionChanged, this, &Editor::updateWordEditor);
+    connect(this, &Editor::cursorPositionChanged, this,
+    [&]()
+    {
+        if (!m_blocks.isEmpty())
+            emit refreshTagList(m_blocks[textCursor().blockNumber()].tagList);
+    });
 
     m_speakerCompleter = new QCompleter(this);
     m_speakerCompleter->setWidget(this);
@@ -274,7 +280,7 @@ void Editor::saveTranscript()
 void Editor::showBlocksFromData()
 {
     for (auto& m_block: qAsConst(m_blocks)) {
-        qDebug() << m_block.timeStamp << m_block.speaker << m_block.text;
+        qDebug() << m_block.timeStamp << m_block.speaker << m_block.text << m_block.tagList;
         for (auto& m_word: qAsConst(m_block.words)) {
             qDebug() << "   " << m_word.timeStamp << m_word.text;
         }
@@ -373,7 +379,7 @@ block Editor::fromEditor(qint64 blockNumber)
         words.append(makeWord(QTime(), m_word));
     }
 
-    block b = {timeStamp, text, speaker, words};
+    block b = {timeStamp, text, speaker, QStringList(), words};
     return b;
 }
 
@@ -391,8 +397,12 @@ void Editor::loadTranscriptData(QFile *file)
                     auto blockTimeStamp = getTime(reader.attributes().value("timestamp").toString());
                     auto blockText = QString("");
                     auto blockSpeaker = reader.attributes().value("speaker").toString();
+                    auto tagString = reader.attributes().value("tags").toString();
+                    QStringList tagList;
+                    if (tagString != "")
+                        tagList = tagString.split(",");
 
-                    struct block line = {blockTimeStamp, "", blockSpeaker, QVector<word>()};
+                    struct block line = {blockTimeStamp, "", blockSpeaker, tagList, QVector<word>()};
                     while(reader.readNextStartElement()){
                         if(reader.name() == "word"){
                             auto wordTimeStamp  = getTime(reader.attributes().value("timestamp").toString());
@@ -470,7 +480,10 @@ void Editor::helpJumpToPlayer()
     }
 
     // If we can jump to a word, then do so
-    if (wordNumber >= 0 && wordNumber < m_blocks[currentBlockNumber].words.size() && m_blocks[currentBlockNumber].words[wordNumber].timeStamp.isValid()) {
+    if (wordNumber >= 0 &&
+        wordNumber < m_blocks[currentBlockNumber].words.size() &&
+        m_blocks[currentBlockNumber].words[wordNumber].timeStamp.isValid()
+        ) {
         for (int i = wordNumber - 1; i >= 0; i--) {
             if (m_blocks[currentBlockNumber].words[i].timeStamp.isValid()) {
                 timeToJump = m_blocks[currentBlockNumber].words[i].timeStamp;
@@ -593,6 +606,7 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
 
     if (currentBlockFromData.text != currentBlockFromEditor.text) {
         currentBlockFromData.text = currentBlockFromEditor.text;
+        auto tagList = currentBlockFromData.tagList;
 
         auto& wordsFromEditor = currentBlockFromEditor.words;
         auto& wordsFromData = currentBlockFromData.words;
@@ -628,6 +642,7 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
         }
 
         currentBlockFromData = currentBlockFromEditor;
+        currentBlockFromData.tagList = tagList;
     }
 
     m_highlighter->setBlockToHighlight(highlightedBlock);
@@ -704,7 +719,11 @@ void Editor::splitLine(const QTime& elapsedTime)
         m_blocks[highlightedBlock].words[wordNumber].timeStamp = elapsedTime;
     }
 
-    block blockToInsert = {m_blocks[highlightedBlock].timeStamp, textAfterCursor.trimmed(), m_blocks[highlightedBlock].speaker, words};
+    block blockToInsert = {m_blocks[highlightedBlock].timeStamp,
+                           textAfterCursor.trimmed(),
+                           m_blocks[highlightedBlock].speaker,
+                           m_blocks[highlightedBlock].tagList,
+                           words};
     m_blocks.insert(highlightedBlock + 1, blockToInsert);
 
     m_blocks[highlightedBlock].text = textBeforeCursor.trimmed();

@@ -21,6 +21,7 @@ struct block
     QTime timeStamp;
     QString text;
     QString speaker;
+    QStringList tagList;
     QVector<word> words;
 
     inline bool operator==(block b) const

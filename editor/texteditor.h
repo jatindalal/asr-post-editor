@@ -1,6 +1,6 @@
 #pragma once
 
-#include "findreplacedialog.h"
+#include "utilities/findreplacedialog.h"
 
 #include <QPlainTextEdit>
 

@@ -64,12 +64,28 @@
         </item>
        </layout>
       </widget>
-      <widget class="QSplitter" name="splitter_editor">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <widget class="Editor" name="m_editor"/>
-       <widget class="TextEditor" name="m_wordEditor" native="true"/>
+      <widget class="QWidget" name="verticalLayoutWidget">
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QSplitter" name="splitter_editor">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <widget class="Editor" name="m_editor"/>
+          <widget class="TextEditor" name="m_wordEditor" native="true"/>
+         </widget>
+        </item>
+        <item>
+         <widget class="TagListDisplayWidget" name="m_tagListDisplay" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
@@ -81,7 +97,7 @@
      <x>0</x>
      <y>0</y>
      <width>1040</width>
-     <height>28</height>
+     <height>38</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -137,6 +153,7 @@
     <addaction name="view_zoomIn"/>
     <addaction name="view_zoomOut"/>
     <addaction name="view_font"/>
+    <addaction name="view_toggleTagList"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -347,6 +364,11 @@
     <string>Editor Font</string>
    </property>
   </action>
+  <action name="view_toggleTagList">
+   <property name="text">
+    <string>Toggle TagList</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -370,6 +392,12 @@
    <class>TextEditor</class>
    <extends>QWidget</extends>
    <header>editor/texteditor.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>TagListDisplayWidget</class>
+   <extends>QWidget</extends>
+   <header>editor/utilities/taglistdisplaywidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -1,6 +1,6 @@
 #include "tool.h"
 #include "./ui_tool.h"
-#include "editor/keyboardshortcutguide.h"
+#include "editor/utilities/keyboardshortcutguide.h"
 
 #include <QFontDialog>
 
@@ -84,6 +84,7 @@ Tool::Tool(QWidget *parent)
     connect(ui->view_zoomIn, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->zoomIn();});
     connect(ui->view_zoomOut, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->zoomOut();});
     connect(ui->view_font, &QAction::triggered, this, &Tool::changeEditorFont);
+    connect(ui->view_toggleTagList, &QAction::triggered, this, [&]() {ui->m_tagListDisplay->setVisible(!ui->m_tagListDisplay->isVisible());});
 
     // Connect Editor menu actions and editor controls
     ui->m_editor->setWordEditor(ui->m_wordEditor);
@@ -100,6 +101,7 @@ Tool::Tool(QWidget *parent)
     connect(ui->editor_propagateTime, &QAction::triggered, ui->m_editor, &Editor::createTimePropagationDialog);
     connect(ui->m_editor, &Editor::message, this->statusBar(), &QStatusBar::showMessage);
     connect(ui->m_editor, &Editor::jumpToPlayer, player, &MediaPlayer::setPositionToTime);
+    connect(ui->m_editor, &Editor::refreshTagList, ui->m_tagListDisplay, &TagListDisplayWidget::refreshTags);
 
     connect(ui->help_keyboardShortcuts, &QAction::triggered, this, &Tool::createKeyboardShortcutGuide);
 

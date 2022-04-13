@@ -2,8 +2,8 @@
 
 #include "blockandword.h"
 #include "texteditor.h"
-#include "changespeakerdialog.h"
-#include "timepropagationdialog.h"
+#include "utilities/changespeakerdialog.h"
+#include "utilities/timepropagationdialog.h"
 
 #include <QXmlStreamReader>
 #include <QRegularExpression>
@@ -35,6 +35,7 @@ protected:
 
 signals:
     void jumpToPlayer(const QTime& time);
+    void refreshTagList(const QStringList& tagList);
 
 public slots:
     void openTranscript();
