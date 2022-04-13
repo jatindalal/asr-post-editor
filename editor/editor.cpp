@@ -344,7 +344,7 @@ word Editor::makeWord(const QTime& t, const QString& s)
 }
 
 // TODO: Space in a speaker name breaks speaker detection
-block Editor::fromEditor(qint64 blockNumber)
+block Editor::fromEditor(qint64 blockNumber) const
 {
     QTime timeStamp;
     QVector<word> words;
@@ -496,7 +496,7 @@ void Editor::helpJumpToPlayer()
     emit jumpToPlayer(timeToJump);
 }
 
-QStringList Editor::listFromFile(const QString& fileName)
+QStringList Editor::listFromFile(const QString& fileName) const
 {
     QStringList words;
 
@@ -841,6 +841,31 @@ void Editor::createTimePropagationDialog()
     m_propagateTime->show();
 }
 
+void Editor::createTagSelectionDialog()
+{
+    if (m_selectTag || !m_blocks.size())
+        return;
+
+    m_selectTag = new TagSelectionDialog(this);
+    m_selectTag->setModal(true);
+
+    m_selectTag->markExistingTags(m_blocks[textCursor().blockNumber()].tagList);
+
+    connect(m_selectTag,
+            &TagSelectionDialog::accepted,
+            this,
+            [&]() {
+                selectTags(m_selectTag->tagList());
+                delete m_selectTag;
+                m_selectTag = nullptr;
+            }
+    );
+    connect(m_selectTag, &TimePropagationDialog::rejected, this, [&]() {delete m_selectTag; m_selectTag = nullptr;});
+    connect(m_selectTag, &TimePropagationDialog::finished, this, [&]() {delete m_selectTag; m_selectTag = nullptr;});
+
+    m_selectTag->show();
+}
+
 void Editor::insertTimeStamp(const QTime& elapsedTime)
 {
     auto blockNumber = textCursor().blockNumber();
@@ -1007,7 +1032,7 @@ void Editor::blockWiseJump(const QString& jumpDirection)
 
 }
 
-word Editor::fromWordEditor(qint64 blockNumber)
+word Editor::fromWordEditor(qint64 blockNumber) const
 {
     QTime timeStamp;
     QString text, blockText(m_wordEditor->document()->findBlockByNumber(blockNumber).text());
@@ -1155,6 +1180,13 @@ void Editor::propagateTime(const QTime& time, int start, int end, bool negateTim
     QTextCursor cursor(document()->findBlockByNumber(blockNumber));
     setTextCursor(cursor);
     centerCursor();
+}
+
+void Editor::selectTags(const QStringList& newTagList)
+{
+    m_blocks[textCursor().blockNumber()].tagList = newTagList;
+
+    emit refreshTagList(newTagList);
 }
 
 void Editor::insertSpeakerCompletion(const QString& completion)

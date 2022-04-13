@@ -4,6 +4,7 @@
 #include "texteditor.h"
 #include "utilities/changespeakerdialog.h"
 #include "utilities/timepropagationdialog.h"
+#include "utilities/tagselectiondialog.h"
 
 #include <QXmlStreamReader>
 #include <QRegularExpression>
@@ -23,7 +24,7 @@ public:
 
     void setWordEditor(TextEditor* wordEditor)
     {
-        m_wordEditor = wordEditor;        
+        m_wordEditor = wordEditor;
         connect(m_wordEditor->document(), &QTextDocument::contentsChange, this, &Editor::wordEditorChanged);
     }
 
@@ -40,16 +41,19 @@ signals:
 public slots:
     void openTranscript();
     void saveTranscript();
-    void showBlocksFromData();
     void highlightTranscript(const QTime& elapsedTime);
+
+    void showBlocksFromData();
     void jumpToHighlightedLine();
     void splitLine(const QTime& elapsedTime);
     void mergeUp();
     void mergeDown();
     void createChangeSpeakerDialog();
     void createTimePropagationDialog();
+    void createTagSelectionDialog();
     void insertTimeStamp(const QTime& elapsedTime);
     void insertTimeStampInWordEditor(const QTime& elapsedTime);
+
     void speakerWiseJump(const QString& jumpDirection);
     void wordWiseJump(const QString& jumpDirection);
     void blockWiseJump(const QString& jumpDirection);
@@ -57,22 +61,28 @@ public slots:
 private slots:
     void contentChanged(int position, int charsRemoved, int charsAdded);
     void wordEditorChanged(int position, int charsRemoved, int charsAdded);
+
     void updateWordEditor();
+
     void changeSpeaker(const QString& newSpeaker, bool replaceAllOccurrences);
     void propagateTime(const QTime& time, int start, int end, bool negateTime);
+    void selectTags(const QStringList& newTagList);
+
     void insertSpeakerCompletion(const QString& completion);
     void insertTextCompletion(const QString& completion);
 
 private:
     static QTime getTime(const QString& text);
-    block fromEditor(qint64 blockNumber);
     static word makeWord(const QTime& t, const QString& s);
-    word fromWordEditor(qint64 blockNumber);
+
     void loadTranscriptData(QFile* file);
     void setContent();
     void saveXml(QFile* file);
     void helpJumpToPlayer();
-    QStringList listFromFile(const QString& fileName);
+
+    block fromEditor(qint64 blockNumber) const;
+    word fromWordEditor(qint64 blockNumber) const;
+    QStringList listFromFile(const QString& fileName) const;
 
     bool settingContent{false}, updatingWordEditor{false}, dontUpdateWordEditor{false};
     QFile* m_file = nullptr;
@@ -83,6 +93,7 @@ private:
     TextEditor* m_wordEditor = nullptr;
     ChangeSpeakerDialog* m_changeSpeaker = nullptr;
     TimePropagationDialog* m_propagateTime = nullptr;
+    TagSelectionDialog* m_selectTag = nullptr;
     QCompleter *m_speakerCompleter = nullptr, *m_textCompleter = nullptr;
     QString m_textCompletionName;
     QStringList m_dictionary;
