@@ -72,7 +72,14 @@
            <enum>Qt::Vertical</enum>
           </property>
           <widget class="Editor" name="m_editor"/>
-          <widget class="TextEditor" name="m_wordEditor" native="true"/>
+          <widget class="WordEditor" name="m_wordEditor">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
          </widget>
         </item>
         <item>
@@ -97,7 +104,7 @@
      <x>0</x>
      <y>0</y>
      <width>1040</width>
-     <height>28</height>
+     <height>38</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -398,16 +405,15 @@
    <header>editor/editor.h</header>
   </customwidget>
   <customwidget>
-   <class>TextEditor</class>
-   <extends>QWidget</extends>
-   <header>editor/texteditor.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>TagListDisplayWidget</class>
    <extends>QWidget</extends>
    <header>editor/utilities/taglistdisplaywidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>WordEditor</class>
+   <extends>QTableWidget</extends>
+   <header>editor/wordeditor.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

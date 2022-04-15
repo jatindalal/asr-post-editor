@@ -289,8 +289,8 @@ void Editor::showBlocksFromData()
 
 void Editor::highlightTranscript(const QTime& elapsedTime)
 {
-    qint64 blockToHighlight = -1;
-    qint64 wordToHighlight = -1;
+    int blockToHighlight = -1;
+    int wordToHighlight = -1;
 
     if (!m_blocks.isEmpty()) {
         for (int i=0; i < m_blocks.size(); i++) {
@@ -337,9 +337,9 @@ QTime Editor::getTime(const QString& text)
     return {};
 }
 
-word Editor::makeWord(const QTime& t, const QString& s)
+word Editor::makeWord(const QTime& t, const QString& s, const QStringList& tagList)
 {
-    word w = {t, s};
+    word w = {t, s, tagList};
     return w;
 }
 
@@ -376,7 +376,7 @@ block Editor::fromEditor(qint64 blockNumber) const
 
     auto list = text.split(" ");
     for (auto& m_word: qAsConst(list)) {
-        words.append(makeWord(QTime(), m_word));
+        words.append(makeWord(QTime(), m_word, QStringList()));
     }
 
     block b = {timeStamp, text, speaker, QStringList(), words};
@@ -407,9 +407,13 @@ void Editor::loadTranscriptData(QFile *file)
                         if(reader.name() == "word"){
                             auto wordTimeStamp  = getTime(reader.attributes().value("timestamp").toString());
                             auto wordText       = reader.readElementText();
+                            auto wordTagString  = reader.attributes().value("tags").toString();
+                            QStringList wordTagList;
+                            if (wordTagString != "")
+                                wordTagList = wordTagString.split(",");
 
                             blockText += (wordText + " ");
-                            line.words.append(makeWord(wordTimeStamp, wordText));
+                            line.words.append(makeWord(wordTimeStamp, wordText, wordTagList));
                         }
                         else
                             reader.skipCurrentElement();
@@ -433,6 +437,9 @@ void Editor::saveXml(QFile* file)
     writer.writeStartDocument();
     writer.writeStartElement("transcript");
 
+    if (m_transcriptLang != "")
+        writer.writeAttribute("lang", m_transcriptLang);
+
     for (auto& a_block: qAsConst(m_blocks)) {
         if (a_block.text != "") {
             auto timeStamp = a_block.timeStamp;
@@ -442,6 +449,9 @@ void Editor::saveXml(QFile* file)
             writer.writeStartElement("line");
             writer.writeAttribute("timestamp", timeStampString);
             writer.writeAttribute("speaker", speaker);
+
+            if (!a_block.tagList.isEmpty())
+                writer.writeAttribute("tags", a_block.tagList.join(","));
 
             for (auto& a_word: qAsConst(a_block.words)) {
                 writer.writeStartElement("word");
@@ -702,11 +712,12 @@ void Editor::splitLine(const QTime& elapsedTime)
         textAfterCursor = textAfterCursor.split("[").first();
 
     auto timeStampOfCutWord = m_blocks[highlightedBlock].words[wordNumber].timeStamp;
+    auto tagsOfCutWord = m_blocks[highlightedBlock].words[wordNumber].tagList;
     QVector<word> words;
     int sizeOfWordsAfter = m_blocks[highlightedBlock].words.size() - wordNumber - 1;
 
     if (cutWordRight != "")
-        words.append(makeWord(timeStampOfCutWord, cutWordRight));
+        words.append(makeWord(timeStampOfCutWord, cutWordRight, tagsOfCutWord));
     for (int i = 0; i < sizeOfWordsAfter; i++) {
         words.append(m_blocks[highlightedBlock].words[wordNumber + 1]);
         m_blocks[highlightedBlock].words.removeAt(wordNumber + 1);
@@ -884,23 +895,6 @@ void Editor::insertTimeStamp(const QTime& elapsedTime)
 
 }
 
-void Editor::insertTimeStampInWordEditor(const QTime& elapsedTime)
-{
-    auto blockNumber = textCursor().blockNumber();
-    auto wordEditorBlockNumber = m_wordEditor->textCursor().blockNumber();
-
-    if (m_blocks.size() <= blockNumber || m_blocks[blockNumber].words.size() <= wordEditorBlockNumber)
-        return;
-
-    m_blocks[blockNumber].words[wordEditorBlockNumber].timeStamp = elapsedTime;
-
-    updateWordEditor();
-
-    QTextCursor cursor(m_wordEditor->document()->findBlockByNumber(wordEditorBlockNumber));
-    m_wordEditor->setTextCursor(cursor);
-    m_wordEditor->centerCursor();
-}
-
 void Editor::speakerWiseJump(const QString& jumpDirection)
 {
     auto& blockNumber = highlightedBlock;
@@ -1032,32 +1026,6 @@ void Editor::blockWiseJump(const QString& jumpDirection)
 
 }
 
-word Editor::fromWordEditor(qint64 blockNumber) const
-{
-    QTime timeStamp;
-    QString text, blockText(m_wordEditor->document()->findBlockByNumber(blockNumber).text());
-
-    QRegularExpressionMatch match = timeStampExp.match(blockText);
-    if (match.hasMatch()) {
-        QString matchedTimeStampString = match.captured();
-        if (blockText.mid(match.capturedEnd()).trimmed() == "") {
-            timeStamp = getTime(matchedTimeStampString.mid(1,matchedTimeStampString.size() - 2));
-            text = blockText.split(matchedTimeStampString)[0];
-        }
-    }
-
-    if (text == "")
-        text = blockText.trimmed();
-    else
-        text = text.trimmed();
-
-    if (text.contains(" "))
-        text = text.split(" ").first();
-
-    word w = {timeStamp, text};
-    return w;
-}
-
 void Editor::updateWordEditor()
 {
     if (!m_wordEditor || dontUpdateWordEditor)
@@ -1072,32 +1040,24 @@ void Editor::updateWordEditor()
         return;
     }
 
-    auto& words = m_blocks[blockNumber].words;
-    QString content;
-
-    for (auto& a_word: qAsConst(words)) {
-        content += a_word.text + " [" + a_word.timeStamp.toString("hh:mm:ss.zzz") + "]\n";
-    }
-
-    m_wordEditor->setPlainText(content.trimmed());
+    m_wordEditor->refreshWords(m_blocks[blockNumber].words);
 
     updatingWordEditor = false;
 }
 
-void Editor::wordEditorChanged(int position, int charsRemoved, int charsAdded)
+void Editor::wordEditorChanged()
 {
     auto editorBlockNumber = textCursor().blockNumber();
 
     if (document()->isEmpty() || m_blocks.isEmpty())
         m_blocks.append(fromEditor(0));
 
-    if (!(charsAdded || charsRemoved) || settingContent || updatingWordEditor || editorBlockNumber >= m_blocks.size())
+    if (settingContent || updatingWordEditor || editorBlockNumber >= m_blocks.size())
         return;
 
     auto& block = m_blocks[editorBlockNumber];
     if (!block.words.size()) {
-        for (int i = 0; i < m_wordEditor->document()->blockCount(); i++)
-            block.words.append(fromWordEditor(i));
+        block.words = m_wordEditor->currentWords();
         return;
     }
 
@@ -1105,11 +1065,9 @@ void Editor::wordEditorChanged(int position, int charsRemoved, int charsAdded)
     words.clear();
 
     QString blockText;
-    for (int i = 0; i < m_wordEditor->blockCount(); i++) {
-        auto wordToAppend = fromWordEditor(i);
-        blockText += wordToAppend.text + " ";
-        words.append(wordToAppend);
-    }
+    words = m_wordEditor->currentWords();
+    for (auto& a_word: words)
+        blockText += a_word.text + " ";
     block.text = blockText.trimmed();
 
     dontUpdateWordEditor = true;

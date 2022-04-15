@@ -19,7 +19,6 @@ public:
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
-    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
     void handleMediaPlayerError();
@@ -29,5 +28,4 @@ private slots:
 private:
     MediaPlayer *player = nullptr;
     Ui::Tool *ui;
-    TextEditor *m_activeEditor = nullptr;
 };

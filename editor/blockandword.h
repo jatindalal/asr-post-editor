@@ -7,6 +7,7 @@ struct word
 {
     QTime timeStamp;
     QString text;
+    QStringList tagList;
 
     inline bool operator==(word w) const
     {

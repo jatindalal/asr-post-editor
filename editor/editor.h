@@ -2,6 +2,7 @@
 
 #include "blockandword.h"
 #include "texteditor.h"
+#include "wordeditor.h"
 #include "utilities/changespeakerdialog.h"
 #include "utilities/timepropagationdialog.h"
 #include "utilities/tagselectiondialog.h"
@@ -22,10 +23,10 @@ class Editor : public TextEditor
 public:
     explicit Editor(QWidget *parent = nullptr);
 
-    void setWordEditor(TextEditor* wordEditor)
+    void setWordEditor(WordEditor* wordEditor)
     {
         m_wordEditor = wordEditor;
-        connect(m_wordEditor->document(), &QTextDocument::contentsChange, this, &Editor::wordEditorChanged);
+        connect(m_wordEditor, &QTableWidget::itemChanged, this, &Editor::wordEditorChanged);
     }
 
     QRegularExpression timeStampExp, speakerExp;
@@ -52,7 +53,6 @@ public slots:
     void createTimePropagationDialog();
     void createTagSelectionDialog();
     void insertTimeStamp(const QTime& elapsedTime);
-    void insertTimeStampInWordEditor(const QTime& elapsedTime);
 
     void speakerWiseJump(const QString& jumpDirection);
     void wordWiseJump(const QString& jumpDirection);
@@ -60,7 +60,7 @@ public slots:
 
 private slots:
     void contentChanged(int position, int charsRemoved, int charsAdded);
-    void wordEditorChanged(int position, int charsRemoved, int charsAdded);
+    void wordEditorChanged();
 
     void updateWordEditor();
 
@@ -73,7 +73,7 @@ private slots:
 
 private:
     static QTime getTime(const QString& text);
-    static word makeWord(const QTime& t, const QString& s);
+    static word makeWord(const QTime& t, const QString& s, const QStringList& tagList);
 
     void loadTranscriptData(QFile* file);
     void setContent();
@@ -81,7 +81,6 @@ private:
     void helpJumpToPlayer();
 
     block fromEditor(qint64 blockNumber) const;
-    word fromWordEditor(qint64 blockNumber) const;
     QStringList listFromFile(const QString& fileName) const;
 
     bool settingContent{false}, updatingWordEditor{false}, dontUpdateWordEditor{false};
@@ -90,7 +89,7 @@ private:
     QString m_transcriptLang;
     Highlighter* m_highlighter = nullptr;
     qint64 highlightedBlock = -1, highlightedWord = -1;
-    TextEditor* m_wordEditor = nullptr;
+    WordEditor* m_wordEditor = nullptr;
     ChangeSpeakerDialog* m_changeSpeaker = nullptr;
     TimePropagationDialog* m_propagateTime = nullptr;
     TagSelectionDialog* m_selectTag = nullptr;

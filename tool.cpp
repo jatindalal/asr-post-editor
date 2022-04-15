@@ -23,13 +23,6 @@ Tool::Tool(QWidget *parent)
     ui->splitter_editor->setSizes(QList<int>({static_cast<int>(0.7 * sizeHint().height()),
                                             static_cast<int>(0.3 * sizeHint().height())}));
 
-
-
-    m_activeEditor = ui->m_editor;
-
-    ui->m_editor->installEventFilter(this);
-    ui->m_wordEditor->installEventFilter(this);
-
     ui->m_wordEditor->setHidden(true);
 
     connect(ui->close, &QAction::triggered, this, &QMainWindow::close);
@@ -73,16 +66,16 @@ Tool::Tool(QWidget *parent)
     );
 
     // Connect edit menu actions
-    connect(ui->edit_undo, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->undo();});
-    connect(ui->edit_redo, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->redo();});
-    connect(ui->edit_cut, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->cut();});
-    connect(ui->edit_copy, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->copy();});
-    connect(ui->edit_paste, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->paste();});
-    connect(ui->edit_findReplace, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->findReplace();});
+    connect(ui->edit_undo, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->undo();});
+    connect(ui->edit_redo, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->redo();});
+    connect(ui->edit_cut, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->cut();});
+    connect(ui->edit_copy, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->copy();});
+    connect(ui->edit_paste, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->paste();});
+    connect(ui->edit_findReplace, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->findReplace();});
 
     // Connect view menu actions
-    connect(ui->view_zoomIn, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->zoomIn();});
-    connect(ui->view_zoomOut, &QAction::triggered, m_activeEditor, [&]() {m_activeEditor->zoomOut();});
+    connect(ui->view_zoomIn, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->zoomIn();});
+    connect(ui->view_zoomOut, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->zoomOut();});
     connect(ui->view_font, &QAction::triggered, this, &Tool::changeEditorFont);
     connect(ui->view_toggleTagList, &QAction::triggered, this, [&]() {ui->m_tagListDisplay->setVisible(!ui->m_tagListDisplay->isVisible());});
 
@@ -142,24 +135,14 @@ void Tool::keyPressEvent(QKeyEvent *event)
         ui->m_editor->blockWiseJump("up");
     else if (event->key() == Qt::Key_Down && event->modifiers() == Qt::AltModifier)
         ui->m_editor->blockWiseJump("down");
-    else if (event->key() == Qt::Key_I && event->modifiers() == Qt::ControlModifier)
-        if (m_activeEditor == ui->m_editor)
+    else if (event->key() == Qt::Key_I && event->modifiers() == Qt::ControlModifier) {
+        if (ui->m_editor->hasFocus())
             ui->m_editor->insertTimeStamp(player->elapsedTime());
-        else
-            ui->m_editor->insertTimeStampInWordEditor(player->elapsedTime());
+        else if(ui->m_wordEditor->hasFocus())
+            ui->m_wordEditor->insertTimeStamp(player->elapsedTime());
+    }
     else
         QMainWindow::keyPressEvent(event);
-}
-
-bool Tool::eventFilter(QObject *watched, QEvent *event)
-{
-    if (event->type() == QEvent::FocusIn) {
-        if (watched == ui->m_wordEditor)
-            m_activeEditor = ui->m_wordEditor;
-        else if (watched == ui->m_editor)
-            m_activeEditor = ui->m_editor;
-    }
-    return false;
 }
 
 void Tool::createKeyboardShortcutGuide()
@@ -177,7 +160,8 @@ void Tool::changeEditorFont()
 
     if (fontSelected) {
         ui->m_editor->document()->setDefaultFont(font);
-        ui->m_wordEditor->document()->setDefaultFont(font);
+        ui->m_wordEditor->setFont(font);
+        ui->m_tagListDisplay->setFont(font);
     }
 }
 
