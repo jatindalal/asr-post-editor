@@ -45,8 +45,8 @@ void KeyboardShortcutGuide::fillDialog() {
     QStringList copy({"Copy", QKeySequence(Qt::CTRL+Qt::Key_C).toString()});
     QStringList paste({"Paste", QKeySequence(Qt::CTRL+Qt::Key_V).toString()});
     QStringList findReplace({"Find / Replace", QKeySequence(Qt::CTRL+Qt::Key_F).toString()});
-    QStringList zoomIn({"Zoom In", QKeySequence(Qt::CTRL+Qt::Key_Equal).toString()});
-    QStringList zoomOut({"Zoom Out", QKeySequence(Qt::CTRL+Qt::Key_Minus).toString()});
+    QStringList zoomIn({"Increase Font Size", QKeySequence(Qt::CTRL+Qt::Key_Equal).toString()});
+    QStringList zoomOut({"Decrease Font Size", QKeySequence(Qt::CTRL+Qt::Key_Minus).toString()});
     QStringList saveTranscript({"Save Transcript", QKeySequence(Qt::CTRL+Qt::Key_S).toString()});
     QStringList splitLine({"Split Line", QKeySequence(Qt::CTRL+Qt::Key_Semicolon).toString()});
     QStringList jumpToHighlightedLine({"Jump to Highlighted Line", QKeySequence(Qt::CTRL+Qt::Key_J).toString()});

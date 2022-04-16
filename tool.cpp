@@ -66,17 +66,17 @@ Tool::Tool(QWidget *parent)
     );
 
     // Connect edit menu actions
-    connect(ui->edit_undo, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->undo();});
-    connect(ui->edit_redo, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->redo();});
-    connect(ui->edit_cut, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->cut();});
-    connect(ui->edit_copy, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->copy();});
-    connect(ui->edit_paste, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->paste();});
-    connect(ui->edit_findReplace, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->findReplace();});
+    connect(ui->edit_undo, &QAction::triggered, ui->m_editor, &Editor::undo);
+    connect(ui->edit_redo, &QAction::triggered, ui->m_editor, &Editor::redo);
+    connect(ui->edit_cut, &QAction::triggered, ui->m_editor, &Editor::cut);
+    connect(ui->edit_copy, &QAction::triggered, ui->m_editor, &Editor::copy);
+    connect(ui->edit_paste, &QAction::triggered, ui->m_editor, &Editor::paste);
+    connect(ui->edit_findReplace, &QAction::triggered, ui->m_editor, &Editor::findReplace);
 
     // Connect view menu actions
-    connect(ui->view_zoomIn, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->zoomIn();});
-    connect(ui->view_zoomOut, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->zoomOut();});
-    connect(ui->view_font, &QAction::triggered, this, &Tool::changeEditorFont);
+    connect(ui->view_incFont, &QAction::triggered, this, [&]() {changeFontSize(+1);});
+    connect(ui->view_decFont, &QAction::triggered, this, [&]() {changeFontSize(-1);});
+    connect(ui->view_font, &QAction::triggered, this, &Tool::changeFont);
     connect(ui->view_toggleTagList, &QAction::triggered, this, [&]() {ui->m_tagListDisplay->setVisible(!ui->m_tagListDisplay->isVisible());});
 
     // Connect Editor menu actions and editor controls
@@ -101,6 +101,9 @@ Tool::Tool(QWidget *parent)
 
     // Connect position slider change to player position
     connect(ui->slider_position, &QSlider::sliderMoved, player, &MediaPlayer::setPosition);
+
+    font = QFont( "Monospace", 10 );
+    setFontForElements();
 }
 
 Tool::~Tool()
@@ -153,15 +156,26 @@ void Tool::createKeyboardShortcutGuide()
     help_keyshortcuts->show();
 }
 
-void Tool::changeEditorFont()
+void Tool::changeFont()
 {
     bool fontSelected;
-    QFont font = QFontDialog::getFont(&fontSelected, QFont( "Arial", 18 ), this, tr("Pick a font") );
+    font = QFontDialog::getFont(&fontSelected, QFont( font.family(), font.pointSize() ), this, tr("Pick a font") );
 
-    if (fontSelected) {
-        ui->m_editor->document()->setDefaultFont(font);
-        ui->m_wordEditor->setFont(font);
-        ui->m_tagListDisplay->setFont(font);
-    }
+    if (fontSelected)
+        setFontForElements();
 }
 
+void Tool::changeFontSize(int change)
+{
+    font.setPointSize(font.pointSize() + change);
+    setFontForElements();
+}
+
+void Tool::setFontForElements()
+{
+    ui->m_editor->document()->setDefaultFont(font);
+    ui->m_editor->textCompleter()->popup()->setFont(font);
+    ui->m_editor->speakerCompleter()->popup()->setFont(font);
+    ui->m_wordEditor->setFont(font);
+    ui->m_tagListDisplay->setFont(font);
+}

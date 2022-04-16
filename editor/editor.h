@@ -29,6 +29,16 @@ public:
         connect(m_wordEditor, &QTableWidget::itemChanged, this, &Editor::wordEditorChanged);
     }
 
+    QCompleter* textCompleter()
+    {
+        return m_textCompleter;
+    }
+
+    QCompleter* speakerCompleter()
+    {
+        return m_speakerCompleter;
+    }
+
     QRegularExpression timeStampExp, speakerExp;
 
 protected:

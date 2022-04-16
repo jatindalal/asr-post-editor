@@ -23,9 +23,13 @@ protected:
 private slots:
     void handleMediaPlayerError();
     void createKeyboardShortcutGuide();
-    void changeEditorFont();
+    void changeFont();
+    void changeFontSize(int change);
 
 private:
+    void setFontForElements();
+
     MediaPlayer *player = nullptr;
     Ui::Tool *ui;
+    QFont font;
 };
