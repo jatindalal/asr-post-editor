@@ -282,7 +282,7 @@ void Editor::showBlocksFromData()
     for (auto& m_block: qAsConst(m_blocks)) {
         qDebug() << m_block.timeStamp << m_block.speaker << m_block.text << m_block.tagList;
         for (auto& m_word: qAsConst(m_block.words)) {
-            qDebug() << "   " << m_word.timeStamp << m_word.text;
+            qDebug() << "   " << m_word.timeStamp << m_word.text << m_word.tagList;
         }
     }
 }
@@ -406,8 +406,8 @@ void Editor::loadTranscriptData(QFile *file)
                     while(reader.readNextStartElement()){
                         if(reader.name() == "word"){
                             auto wordTimeStamp  = getTime(reader.attributes().value("timestamp").toString());
-                            auto wordText       = reader.readElementText();
                             auto wordTagString  = reader.attributes().value("tags").toString();
+                            auto wordText       = reader.readElementText();
                             QStringList wordTagList;
                             if (wordTagString != "")
                                 wordTagList = wordTagString.split(",");
@@ -456,6 +456,7 @@ void Editor::saveXml(QFile* file)
             for (auto& a_word: qAsConst(a_block.words)) {
                 writer.writeStartElement("word");
                 writer.writeAttribute("timestamp", a_word.timeStamp.toString("hh:mm:ss.zzz"));
+                writer.writeAttribute("tags", a_word.tagList.join(","));
                 writer.writeCharacters(a_word.text);
                 writer.writeEndElement();
             }

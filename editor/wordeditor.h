@@ -18,5 +18,4 @@ public slots:
 private:
     void fitTableContents();
     static QTime getTime(const QString& text);
-    static QStringList getTagList(const QString& tagString);
 };

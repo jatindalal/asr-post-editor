@@ -5,11 +5,12 @@
 WordEditor::WordEditor(QWidget* parent)
     : QTableWidget(parent)
 {
-    setColumnCount(3);
+    setColumnCount(4);
 
     setHorizontalHeaderItem(0, new QTableWidgetItem("Text"));
     setHorizontalHeaderItem(1, new QTableWidgetItem("End Time"));
-    setHorizontalHeaderItem(2, new QTableWidgetItem("Tags"));
+    setHorizontalHeaderItem(2, new QTableWidgetItem("InvW"));
+    setHorizontalHeaderItem(3, new QTableWidgetItem("Slacked"));
 
     fitTableContents();
 }
@@ -21,7 +22,12 @@ QVector<word> WordEditor::currentWords() const
     for (int i = 0; i < rowCount(); i++) {
         auto text = item(i, 0)->text();
         auto timeStamp = getTime(item(i, 1)->text());
-        auto tagList = getTagList(item(i, 2)->text());
+        QStringList tagList;
+
+        if (item(i, 2)->checkState() == Qt::Checked)
+            tagList << "InvW";
+        if (item(i, 3)->checkState() == Qt::Checked)
+            tagList << "Slacked";
 
         wordsToReturn.append(word {timeStamp, text, tagList});
     }
@@ -32,6 +38,11 @@ QVector<word> WordEditor::currentWords() const
 void WordEditor::refreshWords(const QVector<word>& words)
 {
     clear();
+
+    setHorizontalHeaderItem(0, new QTableWidgetItem("Text"));
+    setHorizontalHeaderItem(1, new QTableWidgetItem("End Time"));
+    setHorizontalHeaderItem(2, new QTableWidgetItem("InvW"));
+    setHorizontalHeaderItem(3, new QTableWidgetItem("Slacked"));
 
     if (words.isEmpty())
         return;
@@ -46,7 +57,18 @@ void WordEditor::refreshWords(const QVector<word>& words)
 
         setItem(counter, 0, new QTableWidgetItem(text));
         setItem(counter, 1, new QTableWidgetItem(timeStamp.toString("hh:mm:ss.zzz")));
-        setItem(counter, 2, new QTableWidgetItem(tagList.join(",")));
+        setItem(counter, 2, new QTableWidgetItem);
+        setItem(counter, 3, new QTableWidgetItem);
+
+        if (tagList.contains("InvW"))
+            item(counter, 2)->setCheckState(Qt::Checked);
+        else
+            item(counter, 2)->setCheckState(Qt::Unchecked);
+
+        if (tagList.contains("Slacked"))
+            item(counter, 3)->setCheckState(Qt::Checked);
+        else
+            item(counter, 3)->setCheckState(Qt::Unchecked);
 
         counter++;
     }
@@ -63,7 +85,8 @@ void WordEditor::fitTableContents()
 {
     resizeRowsToContents();
     resizeColumnsToContents();
-    horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
 }
 
 QTime WordEditor::getTime(const QString& text)
@@ -77,21 +100,6 @@ QTime WordEditor::getTime(const QString& text)
         return QTime::fromString(text, "m:s");
     }
     return {};
-}
-
-QStringList WordEditor::getTagList(const QString& tagString)
-{
-    if (tagString == "")
-        return {};
-
-    QStringList tagsToReturn;
-
-    if (tagString.contains("invw", Qt::CaseInsensitive))
-        tagsToReturn << "InvW";
-    if (tagString.contains("slacked", Qt::CaseInsensitive))
-        tagsToReturn << "Slacked";
-
-    return tagsToReturn;
 }
 
 
