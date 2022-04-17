@@ -456,7 +456,10 @@ void Editor::saveXml(QFile* file)
             for (auto& a_word: qAsConst(a_block.words)) {
                 writer.writeStartElement("word");
                 writer.writeAttribute("timestamp", a_word.timeStamp.toString("hh:mm:ss.zzz"));
-                writer.writeAttribute("tags", a_word.tagList.join(","));
+
+                if (!a_word.tagList.isEmpty())
+                    writer.writeAttribute("tags", a_word.tagList.join(","));
+
                 writer.writeCharacters(a_word.text);
                 writer.writeEndElement();
             }

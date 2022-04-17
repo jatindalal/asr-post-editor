@@ -99,7 +99,6 @@ QTime WordEditor::getTime(const QString& text)
         if (text.count(":") == 2) return QTime::fromString(text, "h:m:s");
         return QTime::fromString(text, "m:s");
     }
-    return {};
 }
 
 
