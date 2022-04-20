@@ -2,5 +2,7 @@
 <qresource prefix="/">
    <file>wordlists/sanskrit_wordlist.txt</file>
    <file>wordlists/english_wordlist.txt</file>
+   <file>wordlists/hindi_wordlist.txt</file>
+   <file>wordlists/gujarati_wordlist.txt</file>
 </qresource>
 </RCC>

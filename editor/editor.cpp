@@ -38,6 +38,10 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
     m_textCompleter->setCompletionMode(QCompleter::PopupCompletion);
     m_textCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
 
+    m_dictionary = listFromFile(":/wordlists/english_wordlist.txt");
+    m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
+    m_textCompletionName = "text_english";
+
     connect(m_speakerCompleter, QOverload<const QString &>::of(&QCompleter::activated),
                      this, &Editor::insertSpeakerCompletion);
     connect(m_textCompleter, QOverload<const QString &>::of(&QCompleter::activated),
@@ -240,6 +244,16 @@ void Editor::openTranscript()
             m_dictionary = listFromFile(":/wordlists/sanskrit_wordlist.txt");
             m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
             m_textCompletionName = "text_sanskrit";
+        }
+        else if (m_transcriptLang == "hindi") {
+            m_dictionary = listFromFile(":/wordlists/hindi_wordlist.txt");
+            m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
+            m_textCompletionName = "text_hindi";
+        }
+        else if (m_transcriptLang == "gujarati") {
+            m_dictionary = listFromFile(":/wordlists/gujarati_wordlist.txt");
+            m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
+            m_textCompletionName = "text_gujarati";
         }
         else{
             m_dictionary = listFromFile(":/wordlists/english_wordlist.txt");
