@@ -21,7 +21,7 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
     connect(this, &Editor::cursorPositionChanged, this,
     [&]()
     {
-        if (!m_blocks.isEmpty())
+        if (!m_blocks.isEmpty() && textCursor().blockNumber() < m_blocks.size())
             emit refreshTagList(m_blocks[textCursor().blockNumber()].tagList);
     });
 
