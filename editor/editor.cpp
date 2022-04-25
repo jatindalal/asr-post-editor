@@ -820,11 +820,12 @@ void Editor::mergeDown()
 
 void Editor::createChangeSpeakerDialog()
 {
-    if (m_changeSpeaker || !m_blocks.size())
+    if (!m_blocks.size())
         return;
 
     m_changeSpeaker = new ChangeSpeakerDialog(this);
     m_changeSpeaker->setModal(true);
+    m_changeSpeaker->setAttribute(Qt::WA_DeleteOnClose);
 
     QSet<QString> speakers;
     for (auto& a_block: qAsConst(m_blocks))
@@ -838,23 +839,19 @@ void Editor::createChangeSpeakerDialog()
             this,
             [&]() {
                 changeSpeaker(m_changeSpeaker->speaker(), m_changeSpeaker->replaceAll());
-                delete m_changeSpeaker;
-                m_changeSpeaker = nullptr;
             }
     );
-    connect(m_changeSpeaker, &ChangeSpeakerDialog::rejected, this, [&]() {delete m_changeSpeaker; m_changeSpeaker = nullptr;});
-    connect(m_changeSpeaker, &ChangeSpeakerDialog::finished, this, [&]() {delete m_changeSpeaker; m_changeSpeaker = nullptr;});
-
     m_changeSpeaker->show();
 }
 
 void Editor::createTimePropagationDialog()
 {
-    if (m_propagateTime || !m_blocks.size())
+    if (!m_blocks.size())
         return;
 
     m_propagateTime = new TimePropagationDialog(this);
     m_propagateTime->setModal(true);
+    m_propagateTime->setAttribute(Qt::WA_DeleteOnClose);
 
     m_propagateTime->setBlockRange(textCursor().blockNumber() + 1, blockCount());
 
@@ -866,23 +863,19 @@ void Editor::createTimePropagationDialog()
                               m_propagateTime->blockStart(),
                               m_propagateTime->blockEnd(),
                               m_propagateTime->negateTime());
-                delete m_propagateTime;
-                m_propagateTime = nullptr;
             }
     );
-    connect(m_propagateTime, &TimePropagationDialog::rejected, this, [&]() {delete m_propagateTime; m_propagateTime = nullptr;});
-    connect(m_propagateTime, &TimePropagationDialog::finished, this, [&]() {delete m_propagateTime; m_propagateTime = nullptr;});
-
     m_propagateTime->show();
 }
 
 void Editor::createTagSelectionDialog()
 {
-    if (m_selectTag || !m_blocks.size())
+    if (!m_blocks.size())
         return;
 
     m_selectTag = new TagSelectionDialog(this);
     m_selectTag->setModal(true);
+    m_selectTag->setAttribute(Qt::WA_DeleteOnClose);
 
     m_selectTag->markExistingTags(m_blocks[textCursor().blockNumber()].tagList);
 
@@ -891,13 +884,8 @@ void Editor::createTagSelectionDialog()
             this,
             [&]() {
                 selectTags(m_selectTag->tagList());
-                delete m_selectTag;
-                m_selectTag = nullptr;
             }
     );
-    connect(m_selectTag, &TimePropagationDialog::rejected, this, [&]() {delete m_selectTag; m_selectTag = nullptr;});
-    connect(m_selectTag, &TimePropagationDialog::finished, this, [&]() {delete m_selectTag; m_selectTag = nullptr;});
-
     m_selectTag->show();
 }
 
