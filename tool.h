@@ -9,13 +9,13 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class Tool; }
 QT_END_NAMESPACE
 
-class Tool : public QMainWindow
+class Tool final : public QMainWindow
 {
     Q_OBJECT
 
 public:
     explicit Tool(QWidget *parent = nullptr);
-    ~Tool();
+    ~Tool() final;
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;

@@ -594,13 +594,6 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
         return;
     }
 
-    qInfo() << "[Content Modified]"
-            << QString("position: %1").arg(position)
-            << QString("chars-removed: %1").arg(charsRemoved)
-            << QString("chars-added: %1").arg(charsAdded)
-            << QString("current-block-number: %1").arg(textCursor().blockNumber())
-            << QString("block-count-change: %1").arg(m_blocks.size() - blockCount());
-
     if (m_highlighter)
         delete m_highlighter;
     m_highlighter = new Highlighter(this->document());
@@ -610,10 +603,12 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
     if(m_blocks.size() != blockCount()) {
         auto blocksChanged = m_blocks.size() - blockCount();
         if (blocksChanged > 0) { // Blocks deleted
+            qInfo() << "[Lines Deleted]" << QString("%1 lines deleted").arg(QString::number(blocksChanged));
             for (int i = 1; i <= blocksChanged; i++)
                 m_blocks.removeAt(currentBlockNumber + 1);
         }
         else { // Blocks added
+            qInfo() << "[Lines Inserted]" << QString("%1 lines inserted").arg(QString::number(-blocksChanged));
             for (int i = 1; i <= -blocksChanged; i++) {
                 if (document()->findBlockByNumber(currentBlockNumber + blocksChanged).text().trimmed() == "")
                     m_blocks.insert(currentBlockNumber + blocksChanged, fromEditor(currentBlockNumber - i));
@@ -626,13 +621,24 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
     auto currentBlockFromEditor = fromEditor(currentBlockNumber);
     auto& currentBlockFromData = m_blocks[currentBlockNumber];
 
-    if (currentBlockFromData.speaker != currentBlockFromEditor.speaker)
+    if (currentBlockFromData.speaker != currentBlockFromEditor.speaker) {
         currentBlockFromData.speaker = currentBlockFromEditor.speaker;
+        qInfo() << "[Speaker Changed]"
+                << QString("line number: %1, %2").arg(QString::number(currentBlockNumber + 1), currentBlockFromEditor.speaker);
+    }
 
-    if (currentBlockFromData.timeStamp != currentBlockFromEditor.timeStamp)
+    if (currentBlockFromData.timeStamp != currentBlockFromEditor.timeStamp) {
         currentBlockFromData.timeStamp = currentBlockFromEditor.timeStamp;
+        qInfo() << "[TimeStamp Changed]"
+                << QString("line number: %1, %2").arg(QString::number(currentBlockNumber + 1), currentBlockFromEditor.timeStamp.toString("hh:mm:ss.zzz"));
+    }
 
     if (currentBlockFromData.text != currentBlockFromEditor.text) {
+        qInfo() << "[Text Changed]"
+                << QString("line number: %1").arg(QString::number(currentBlockNumber + 1))
+                << QString("initial: %1").arg(currentBlockFromData.text)
+                << QString("final: %1").arg(currentBlockFromEditor.text);
+
         currentBlockFromData.text = currentBlockFromEditor.text;
         auto tagList = currentBlockFromData.tagList;
 
