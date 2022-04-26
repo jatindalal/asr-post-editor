@@ -10,12 +10,12 @@ class WordEditor: public QTableWidget
 public:
     explicit WordEditor(QWidget* parent = nullptr);
     QVector<word> currentWords() const;
+    void fitTableContents();
 
 public slots:
     void refreshWords(const QVector<word>& words);
     void insertTimeStamp(const QTime& timeToInsert);
 
 private:
-    void fitTableContents();
     static QTime getTime(const QString& text);
 };

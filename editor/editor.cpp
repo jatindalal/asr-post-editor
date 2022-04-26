@@ -8,6 +8,7 @@
 #include <QScrollBar>
 #include <QStringListModel>
 #include <QMessageBox>
+#include <QMenu>
 #include <algorithm>
 #include <QDebug>
 
@@ -151,7 +152,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
     TextEditor::keyPressEvent(event);
 
     QString blockText = textCursor().block().text();
-    QString textTillCursor = blockText.left(textCursor().positionInBlock()).trimmed();
+    QString textTillCursor = blockText.left(textCursor().positionInBlock());
     QString completionPrefix;
 
     const bool shortcutPressed = (event->key() == Qt::Key_N && event->modifiers() == Qt::ControlModifier);
@@ -220,6 +221,49 @@ void Editor::keyPressEvent(QKeyEvent *event)
     m_completer->complete(cr);
 }
 
+void Editor::contextMenuEvent(QContextMenuEvent *event)
+{
+    QMenu *menu = createStandardContextMenu();
+
+    QString blockText = textCursor().block().text();
+    QString textTillCursor = blockText.left(textCursor().positionInBlock());
+
+    const bool containsSpeakerBraces = blockText.leftRef(blockText.indexOf(" ")).contains("]:");
+    const bool containsTimeStamp = blockText.trimmed() != "" && blockText.trimmed().back() == ']';
+    bool isAWordUnderCursor = false;
+    int wordNumber;
+
+    if ((containsSpeakerBraces && textTillCursor.count(" ") > 0) || !containsSpeakerBraces) {
+        if (m_blocks.size() > textCursor().blockNumber() &&
+                !(containsTimeStamp && textTillCursor.count(" ") == blockText.count(" "))) {
+            isAWordUnderCursor = true;
+
+            if (containsSpeakerBraces) {
+                auto textWithoutSpeaker = textTillCursor.split("]:").last();
+                wordNumber = textWithoutSpeaker.trimmed().count(" ");
+            }
+            else
+                wordNumber = textTillCursor.trimmed().count(" ");
+        }
+    }
+
+    if (isAWordUnderCursor) {
+        auto markAsCorrectAction = new QAction;
+        markAsCorrectAction->setText("Mark As Correct");
+
+        connect(markAsCorrectAction, &QAction::triggered, this,
+                [this, wordNumber]()
+                {
+                    markWordAsCorrect(textCursor().blockNumber(), wordNumber);
+        });
+
+        menu->addAction(markAsCorrectAction);
+    }
+
+    menu->exec(event->globalPos());
+    delete menu;
+}
+
 void Editor::openTranscript()
 {
     QFileDialog fileDialog(this);
@@ -229,16 +273,14 @@ void Editor::openTranscript()
 
     if (fileDialog.exec() == QDialog::Accepted) {
         QUrl *fileUrl = new QUrl(fileDialog.selectedUrls().constFirst());
-        if (m_file)
-            delete m_file;
-        m_file = new QFile(fileUrl->toLocalFile());
+        QFile transcriptFile(fileUrl->toLocalFile());
 
-        if (!m_file->open(QIODevice::ReadOnly)) {
-            emit message(m_file->errorString());
+        if (!transcriptFile.open(QIODevice::ReadOnly)) {
+            emit message(transcriptFile.errorString());
             return;
         }
 
-        loadTranscriptData(m_file);
+        loadTranscriptData(transcriptFile);
 
         if (m_transcriptLang == "sanskrit") {
             m_dictionary = listFromFile(":/wordlists/sanskrit_wordlist.txt");
@@ -259,6 +301,13 @@ void Editor::openTranscript()
             m_dictionary = listFromFile(":/wordlists/english_wordlist.txt");
             m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
             m_textCompletionName = "text_english";
+        }
+
+        auto correctedWordsList = listFromFile(QString("corrected_words_%1.txt").arg(m_transcriptLang));
+        if (!correctedWordsList.isEmpty()) {
+            std::copy(correctedWordsList.begin(),
+                      correctedWordsList.end(),
+                      std::inserter(m_correctedWords, m_correctedWords.begin()));
         }
 
         setContent();
@@ -397,9 +446,9 @@ block Editor::fromEditor(qint64 blockNumber) const
     return b;
 }
 
-void Editor::loadTranscriptData(QFile *file)
+void Editor::loadTranscriptData(QFile& file)
 {
-    QXmlStreamReader reader(file);
+    QXmlStreamReader reader(&file);
     m_transcriptLang = "";
     m_blocks.clear();
     if (reader.readNextStartElement()) {
@@ -568,7 +617,12 @@ void Editor::setContent()
                     auto wordText = m_blocks[i].words[j].text.toLower();
                     if (!std::binary_search(m_dictionary.begin(),
                                             m_dictionary.end(),
-                                            wordText))
+                                            wordText)
+                        &&
+                        !std::binary_search(m_correctedWords.begin(),
+                                            m_correctedWords.end(),
+                                            wordText)
+                       )
                         invalidWords.insert(i, j);
                 }
             }
@@ -622,9 +676,12 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
     auto& currentBlockFromData = m_blocks[currentBlockNumber];
 
     if (currentBlockFromData.speaker != currentBlockFromEditor.speaker) {
-        currentBlockFromData.speaker = currentBlockFromEditor.speaker;
         qInfo() << "[Speaker Changed]"
-                << QString("line number: %1, %2").arg(QString::number(currentBlockNumber + 1), currentBlockFromEditor.speaker);
+                << QString("line number: %1").arg(QString::number(currentBlockNumber + 1))
+                << QString("initial: %1").arg(currentBlockFromData.speaker)
+                << QString("final: %1").arg(currentBlockFromEditor.speaker);
+
+        currentBlockFromData.speaker = currentBlockFromEditor.speaker;
     }
 
     if (currentBlockFromData.timeStamp != currentBlockFromEditor.timeStamp) {
@@ -692,7 +749,12 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
                 auto wordText = m_blocks[i].words[j].text.toLower();
                 if (!std::binary_search(m_dictionary.begin(),
                                         m_dictionary.end(),
-                                        wordText))
+                                        wordText)
+                    &&
+                    !std::binary_search(m_correctedWords.begin(),
+                                        m_correctedWords.end(),
+                                        wordText)
+                    )
                     invalidWords.insert(i, j);
             }
         }
@@ -766,6 +828,10 @@ void Editor::splitLine(const QTime& elapsedTime)
 
     setContent();
     updateWordEditor();
+
+    qInfo() << "[Line Split]"
+            << QString("line number: %1").arg(QString::number(highlightedBlock + 1))
+            << QString("word number: %1, %2").arg(QString::number(wordNumber + 1), cutWordLeft + cutWordRight);
 }
 
 void Editor::mergeUp()
@@ -789,6 +855,10 @@ void Editor::mergeUp()
     QTextCursor cursor(document()->findBlockByNumber(previousBlockNumber));
     setTextCursor(cursor);
     centerCursor();
+
+    qInfo() << "[Merge Up]"
+            << QString("line number: %1, %2").arg(QString::number(previousBlockNumber + 1), QString::number(blockNumber + 1))
+            << QString("final line: %1, %2").arg(QString::number(previousBlockNumber + 1), m_blocks[previousBlockNumber].text);
 }
 
 void Editor::mergeDown()
@@ -816,6 +886,10 @@ void Editor::mergeDown()
     QTextCursor cursor(document()->findBlockByNumber(blockNumber));
     setTextCursor(cursor);
     centerCursor();
+
+    qInfo() << "[Merge Down]"
+            << QString("line number: %1, %2").arg(QString::number(blockNumber + 1), QString::number(nextBlockNumber + 1))
+            << QString("final line: %1, %2").arg(QString::number(blockNumber + 1), m_blocks[nextBlockNumber].text);
 }
 
 void Editor::createChangeSpeakerDialog()
@@ -904,6 +978,9 @@ void Editor::insertTimeStamp(const QTime& elapsedTime)
     setTextCursor(cursor);
     centerCursor();
     dontUpdateWordEditor = false;
+
+    qInfo() << "[Inserted TimeStamp from Player]"
+            << QString("line number: %1, timestamp: %2").arg(QString::number(blockNumber), elapsedTime.toString("hh:mm:ss.zzz"));
 
 }
 
@@ -1110,6 +1187,11 @@ void Editor::changeSpeaker(const QString& newSpeaker, bool replaceAllOccurrences
     QTextCursor cursor(document()->findBlockByNumber(blockNumber));
     setTextCursor(cursor);
     centerCursor();
+
+    qInfo() << "[Speaker Changed]"
+            << QString("line number: %1").arg(QString::number(blockNumber + 1))
+            << QString("initial: %1").arg(blockSpeaker)
+            << QString("final: %1").arg(newSpeaker);
 }
 
 void Editor::propagateTime(const QTime& time, int start, int end, bool negateTime)
@@ -1150,6 +1232,10 @@ void Editor::propagateTime(const QTime& time, int start, int end, bool negateTim
     QTextCursor cursor(document()->findBlockByNumber(blockNumber));
     setTextCursor(cursor);
     centerCursor();
+
+    qInfo() << "[Time propagated]"
+            << QString("block range: %1 - %2").arg(QString::number(start), QString::number(end))
+            << QString("time: %1 %2").arg(negateTime? "-" : "+", time.toString("hh:mm:ss.zzz"));
 }
 
 void Editor::selectTags(const QStringList& newTagList)
@@ -1157,6 +1243,54 @@ void Editor::selectTags(const QStringList& newTagList)
     m_blocks[textCursor().blockNumber()].tagList = newTagList;
 
     emit refreshTagList(newTagList);
+
+    qInfo() << "[Tags Selected]"
+            << "new tags: " << newTagList;
+}
+
+void Editor::markWordAsCorrect(int blockNumber, int wordNumber)
+{
+    auto textToInsert = m_blocks[blockNumber].words[wordNumber].text;
+
+    if (std::binary_search(m_dictionary.begin(),
+                       m_dictionary.end(),
+                       textToInsert))
+    {
+        emit message("Word is already correct.");
+        return;
+    }
+
+    m_correctedWords.insert(textToInsert);
+
+    QMultiMap<int, int> invalidWords;
+    for (int i = 0; i < m_blocks.size(); i++) {
+        for (int j = 0; j < m_blocks[i].words.size(); j++) {
+            auto wordText = m_blocks[i].words[j].text.toLower();
+            if (!std::binary_search(m_dictionary.begin(),
+                                    m_dictionary.end(),
+                                    wordText)
+                &&
+                !std::binary_search(m_correctedWords.begin(),
+                                    m_correctedWords.end(),
+                                    wordText)
+                )
+                invalidWords.insert(i, j);
+        }
+    }
+    m_highlighter->setInvalidWords(invalidWords);
+    m_highlighter->rehighlight();
+
+    QFile correctedWords(QString("corrected_words_%1.txt").arg(m_transcriptLang));
+
+    if (!correctedWords.open(QFile::WriteOnly | QFile::Truncate))
+        emit message("Couldn't write corrected words to file.");
+    else {
+        for (auto& a_word: m_correctedWords)
+            correctedWords.write(QString(a_word + "\n").toStdString().c_str());
+    }
+
+    qInfo() << "[Mark As Correct]"
+            << QString("text: %1").arg(textToInsert);
 }
 
 void Editor::insertSpeakerCompletion(const QString& completion)

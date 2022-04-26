@@ -176,6 +176,9 @@ void Tool::setFontForElements()
     ui->m_editor->document()->setDefaultFont(font);
     ui->m_editor->textCompleter()->popup()->setFont(font);
     ui->m_editor->speakerCompleter()->popup()->setFont(font);
+
     ui->m_wordEditor->setFont(font);
+    ui->m_wordEditor->fitTableContents();
+
     ui->m_tagListDisplay->setFont(font);
 }

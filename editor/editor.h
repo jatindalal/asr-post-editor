@@ -13,6 +13,7 @@
 #include <QTextDocument>
 #include <QCompleter>
 #include <QAbstractItemModel>
+#include <set>
 
 class Highlighter;
 
@@ -44,6 +45,7 @@ public:
 protected:
     void mousePressEvent(QMouseEvent *e) override;
     void keyPressEvent(QKeyEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
 
 signals:
     void jumpToPlayer(const QTime& time);
@@ -77,6 +79,7 @@ private slots:
     void changeSpeaker(const QString& newSpeaker, bool replaceAllOccurrences);
     void propagateTime(const QTime& time, int start, int end, bool negateTime);
     void selectTags(const QStringList& newTagList);
+    void markWordAsCorrect(int blockNumber, int wordNumber);
 
     void insertSpeakerCompletion(const QString& completion);
     void insertTextCompletion(const QString& completion);
@@ -85,7 +88,7 @@ private:
     static QTime getTime(const QString& text);
     static word makeWord(const QTime& t, const QString& s, const QStringList& tagList);
 
-    void loadTranscriptData(QFile* file);
+    void loadTranscriptData(QFile& file);
     void setContent();
     void saveXml(QFile* file);
     void helpJumpToPlayer();
@@ -94,7 +97,7 @@ private:
     QStringList listFromFile(const QString& fileName) const;
 
     bool settingContent{false}, updatingWordEditor{false}, dontUpdateWordEditor{false};
-    QFile* m_file = nullptr;
+
     QVector<block> m_blocks;
     QString m_transcriptLang;
     Highlighter* m_highlighter = nullptr;
@@ -106,6 +109,7 @@ private:
     QCompleter *m_speakerCompleter = nullptr, *m_textCompleter = nullptr;
     QString m_textCompletionName;
     QStringList m_dictionary;
+    std::set<QString> m_correctedWords;
 };
 
 
