@@ -615,6 +615,10 @@ void Editor::setContent()
             else {
                 for (int j = 0; j < m_blocks[i].words.size(); j++) {
                     auto wordText = m_blocks[i].words[j].text.toLower();
+
+                    if (m_punctuation.contains(wordText.back()))
+                        wordText = wordText.left(wordText.size() - 1);
+
                     if (!std::binary_search(m_dictionary.begin(),
                                             m_dictionary.end(),
                                             wordText)
@@ -747,6 +751,10 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
         else {
             for (int j = 0; j < m_blocks[i].words.size(); j++) {
                 auto wordText = m_blocks[i].words[j].text.toLower();
+
+                if (m_punctuation.contains(wordText.back()))
+                    wordText = wordText.left(wordText.size() - 1);
+
                 if (!std::binary_search(m_dictionary.begin(),
                                         m_dictionary.end(),
                                         wordText)
@@ -1252,9 +1260,12 @@ void Editor::markWordAsCorrect(int blockNumber, int wordNumber)
 {
     auto textToInsert = m_blocks[blockNumber].words[wordNumber].text;
 
+    if (textToInsert.trimmed() == "")
+        return;
+
     if (std::binary_search(m_dictionary.begin(),
-                       m_dictionary.end(),
-                       textToInsert))
+           m_dictionary.end(),
+           textToInsert))
     {
         emit message("Word is already correct.");
         return;
@@ -1266,6 +1277,10 @@ void Editor::markWordAsCorrect(int blockNumber, int wordNumber)
     for (int i = 0; i < m_blocks.size(); i++) {
         for (int j = 0; j < m_blocks[i].words.size(); j++) {
             auto wordText = m_blocks[i].words[j].text.toLower();
+
+            if (m_punctuation.contains(wordText.back()))
+                wordText = wordText.left(wordText.size() - 1);
+
             if (!std::binary_search(m_dictionary.begin(),
                                     m_dictionary.end(),
                                     wordText)

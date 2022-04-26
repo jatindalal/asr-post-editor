@@ -99,7 +99,7 @@ private:
     bool settingContent{false}, updatingWordEditor{false}, dontUpdateWordEditor{false};
 
     QVector<block> m_blocks;
-    QString m_transcriptLang;
+    QString m_transcriptLang, m_textCompletionName, m_punctuation{",.!;:"};
     Highlighter* m_highlighter = nullptr;
     qint64 highlightedBlock = -1, highlightedWord = -1;
     WordEditor* m_wordEditor = nullptr;
@@ -107,7 +107,6 @@ private:
     TimePropagationDialog* m_propagateTime = nullptr;
     TagSelectionDialog* m_selectTag = nullptr;
     QCompleter *m_speakerCompleter = nullptr, *m_textCompleter = nullptr;
-    QString m_textCompletionName;
     QStringList m_dictionary;
     std::set<QString> m_correctedWords;
 };
