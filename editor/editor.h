@@ -99,7 +99,7 @@ private:
     bool settingContent{false}, updatingWordEditor{false}, dontUpdateWordEditor{false};
 
     QVector<block> m_blocks;
-    QString m_transcriptLang, m_textCompletionName, m_punctuation{",.!;:"};
+    QString m_transcriptLang, m_punctuation{",.!;:"};
     Highlighter* m_highlighter = nullptr;
     qint64 highlightedBlock = -1, highlightedWord = -1;
     WordEditor* m_wordEditor = nullptr;

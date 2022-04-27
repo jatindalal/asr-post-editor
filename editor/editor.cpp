@@ -41,7 +41,6 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
 
     m_dictionary = listFromFile(":/wordlists/english_wordlist.txt");
     m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
-    m_textCompletionName = "text_english";
 
     connect(m_speakerCompleter, QOverload<const QString &>::of(&QCompleter::activated),
                      this, &Editor::insertSpeakerCompletion);
@@ -282,27 +281,14 @@ void Editor::openTranscript()
 
         loadTranscriptData(transcriptFile);
 
-        if (m_transcriptLang == "sanskrit") {
-            m_dictionary = listFromFile(":/wordlists/sanskrit_wordlist.txt");
-            m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
-            m_textCompletionName = "text_sanskrit";
-        }
-        else if (m_transcriptLang == "hindi") {
-            m_dictionary = listFromFile(":/wordlists/hindi_wordlist.txt");
-            m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
-            m_textCompletionName = "text_hindi";
-        }
-        else if (m_transcriptLang == "gujarati") {
-            m_dictionary = listFromFile(":/wordlists/gujarati_wordlist.txt");
-            m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
-            m_textCompletionName = "text_gujarati";
-        }
-        else{
-            m_dictionary = listFromFile(":/wordlists/english_wordlist.txt");
-            m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
-            m_textCompletionName = "text_english";
-        }
+        if (m_transcriptLang == "")
+            m_transcriptLang = "english";
 
+        auto dictionaryFileName = QString(":/wordlists/%1_wordlist.txt").arg(m_transcriptLang);
+        m_dictionary = listFromFile(dictionaryFileName);
+        m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
+
+        m_correctedWords.clear();
         auto correctedWordsList = listFromFile(QString("corrected_words_%1.txt").arg(m_transcriptLang));
         if (!correctedWordsList.isEmpty()) {
             std::copy(correctedWordsList.begin(),
