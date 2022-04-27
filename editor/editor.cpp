@@ -616,7 +616,7 @@ void Editor::setContent()
                 for (int j = 0; j < m_blocks[i].words.size(); j++) {
                     auto wordText = m_blocks[i].words[j].text.toLower();
 
-                    if (m_punctuation.contains(wordText.back()))
+                    if (wordText != "" && m_punctuation.contains(wordText.back()))
                         wordText = wordText.left(wordText.size() - 1);
 
                     if (!std::binary_search(m_dictionary.begin(),
@@ -752,7 +752,7 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
             for (int j = 0; j < m_blocks[i].words.size(); j++) {
                 auto wordText = m_blocks[i].words[j].text.toLower();
 
-                if (m_punctuation.contains(wordText.back()))
+                if (wordText != "" && m_punctuation.contains(wordText.back()))
                     wordText = wordText.left(wordText.size() - 1);
 
                 if (!std::binary_search(m_dictionary.begin(),
@@ -1278,7 +1278,7 @@ void Editor::markWordAsCorrect(int blockNumber, int wordNumber)
         for (int j = 0; j < m_blocks[i].words.size(); j++) {
             auto wordText = m_blocks[i].words[j].text.toLower();
 
-            if (m_punctuation.contains(wordText.back()))
+            if (wordText != "" && m_punctuation.contains(wordText.back()))
                 wordText = wordText.left(wordText.size() - 1);
 
             if (!std::binary_search(m_dictionary.begin(),
