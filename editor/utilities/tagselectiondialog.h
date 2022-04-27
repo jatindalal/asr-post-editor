@@ -20,4 +20,5 @@ public slots:
 
 private:
     Ui::TagSelectionDialog* ui;
+    QStringList m_languages, m_languageCodes;
 };

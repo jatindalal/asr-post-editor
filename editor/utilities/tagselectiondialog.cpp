@@ -9,13 +9,18 @@ TagSelectionDialog::TagSelectionDialog(QWidget* parent)
 {
     ui->setupUi(this);
     ui->label->setHidden(true);
-    ui->lineEdit_language->setHidden(true);
+    ui->comboBox_lang->setHidden(true);
+
+    ui->comboBox_lang->setPlaceholderText("Select Language");
+    m_languages = QString("Afrikaans,Albanian,Amharic,Arabic,Armenian,Azerbaijani,Basque,Belarusian,Bengali,Bosnian,Bulgarian,Catalan,Cebuano,Corsican,Croatian,Czech,Danish,Dutch,English,Esperanto,Estonian,Finnish,French,Frisian,Galician,Georgian,German,Greek,Gujarati,Haitian Creole,Hausa,Hawaiian,Hebrew,Hindi,Hmong,Hungarian,Icelandic,Igbo,Indonesian,Irish,Italian,Japanese,Javanese,Kannada,Kazakh,Khmer,Kinyarwanda,Korean,Kurdish,Kyrgyz,Lao,Latvian,Lithuanian,Luxembourgish,Macedonian,Malagasy,Malay,Malayalam,Maltese,Maori,Marathi,Mongolian,Myanmar,Nepali,Norwegian,Nyanja,Odia (Oriya),Pashto,Persian,Polish,Portuguese,Punjabi,Romanian,Russian,Samoan,Scots Gaelic,Serbian,Sesotho,Shona,Sindhi,Sinhala,Slovak,Slovenian,Somali,Spanish,Sundanese,Swahili,Swedish,Tagalog,Tajik,Tamil,Tatar,Telugu,Thai,Turkish,Turkmen,Ukrainian,Urdu,Uyghur,Uzbek,Vietnamese,Welsh,Xhosa,Yiddish,Yoruba,Zulu").split(",");
+    m_languageCodes = QString("af,sq,am,ar,hy,az,eu,be,bn,bs,bg,ca,ceb,co,hr,cs,da,nl,en,eo,et,fi,fr,fy,gl,ka,de,el,gu,ht,ha,haw,he,hi,hmn,hu,is,ig,id,ga,it,ja,jv,kn,kk,km,rw,ko,ku,ky,lo,lv,lt,lb,mk,mg,ms,ml,mt,mi,mr,mn,my,ne,no,ny,or,ps,fa,pl,pt,pa,ro,ru,sm,gd,sr,st,sn,sd,si,sk,sl,so,es,su,sw,sv,tl,tg,ta,tt,te,th,tr,tk,uk,ur,ug,uz,vi,cy,xh,yi,yo,zu").split(",");
+    ui->comboBox_lang->addItems(m_languages);
 
     connect(ui->checkBox_lang, &QCheckBox::stateChanged, this,
     [&]()
     {
         ui->label->setVisible(!ui->label->isVisible());
-        ui->lineEdit_language->setVisible(!ui->lineEdit_language->isVisible());
+        ui->comboBox_lang->setVisible(!ui->comboBox_lang->isVisible());
     }
     );
 }
@@ -40,8 +45,10 @@ QStringList TagSelectionDialog::tagList() const
         currentTagList << "L1Infl";
     if (ui->checkBox_mltsp->isChecked())
         currentTagList << "MltSp";
-    if (ui->checkBox_lang->isChecked() && ui->lineEdit_language->text() != "") {
-        currentTagList << QString("Lang_%1").arg(ui->lineEdit_language->text());
+    if (ui->checkBox_lang->isChecked() && ui->comboBox_lang->currentText() != "Select Language") {
+        auto selectedLanguage = ui->comboBox_lang->currentText().split(" ").last();
+        auto langCode = m_languageCodes.at(m_languages.indexOf(selectedLanguage));
+        currentTagList << QString("Lang_%1").arg(langCode);
     }
 
     return currentTagList;
@@ -64,7 +71,8 @@ void TagSelectionDialog::markExistingTags(const QStringList& existingTagsList)
     if (!subList.isEmpty()) {
         ui->checkBox_lang->setChecked(true);
 
-        auto langText = subList.first();
-        ui->lineEdit_language->setText(langText.mid(5));
+        auto langCode = subList.first().split("_").last();
+        auto language = m_languages.at(m_languageCodes.indexOf(langCode));
+        ui->comboBox_lang->setCurrentText(language);
     }
 }

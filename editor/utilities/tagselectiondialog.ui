@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>417</width>
+    <width>422</width>
     <height>273</height>
    </rect>
   </property>
@@ -83,7 +83,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_language"/>
+        <widget class="QComboBox" name="comboBox_lang">
+         <property name="editable">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
