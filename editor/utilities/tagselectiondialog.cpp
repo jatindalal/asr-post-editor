@@ -47,8 +47,11 @@ QStringList TagSelectionDialog::tagList() const
         currentTagList << "MltSp";
     if (ui->checkBox_lang->isChecked() && ui->comboBox_lang->currentText() != "Select Language") {
         auto selectedLanguage = ui->comboBox_lang->currentText().split(" ").last();
-        auto langCode = m_languageCodes.at(m_languages.indexOf(selectedLanguage));
-        currentTagList << QString("Lang_%1").arg(langCode);
+        auto index = m_languages.indexOf(selectedLanguage);
+        if (index != -1) {
+            auto langCode = m_languageCodes.at(index);
+            currentTagList << QString("Lang_%1").arg(langCode);
+        }
     }
 
     return currentTagList;

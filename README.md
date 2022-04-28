@@ -10,10 +10,12 @@ To build the tool you'll need a few things to get started
 1. Qt 5 installed on your system with base and multimedia packages.
 2. Codec support for media playback (different for different operating systems).
 3. A C++ compiler corresponding to the Qt toolchain that you installed.
-5. Cmake to build the project.
-###Notes:
+4. Cmake to build the project.
+
+### Notes:
 * Make sure cmake can find Qt5 multimedia package cmake lists file.   
 * Clone the repo or download as zip
+* Qt creator can be used to skip steps below and build the tool
 ```shell
 git clone https://github.com/jatindalal/asr-post-editor
 cd asr-post-editor
