@@ -39,7 +39,22 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
     m_textCompleter->setCompletionMode(QCompleter::PopupCompletion);
     m_textCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
 
-    m_dictionary = listFromFile(":/wordlists/english_wordlist.txt");
+    m_dictionary = listFromFile(":/wordlists/english.txt");
+    m_transcriptLang = "english";
+    auto correctedWordsList = listFromFile(QString("corrected_words_%1.txt").arg(m_transcriptLang));
+    if (!correctedWordsList.isEmpty()) {
+        std::copy(correctedWordsList.begin(),
+                  correctedWordsList.end(),
+                  std::inserter(m_correctedWords, m_correctedWords.begin()));
+
+        for (auto a_word: m_correctedWords) {
+            m_dictionary.insert
+                    (
+                            std::upper_bound(m_dictionary.begin(), m_dictionary.end(), a_word),
+                            a_word
+                    );
+        }
+    }
     m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
 
     connect(m_speakerCompleter, QOverload<const QString &>::of(&QCompleter::activated),
@@ -284,9 +299,8 @@ void Editor::openTranscript()
         if (m_transcriptLang == "")
             m_transcriptLang = "english";
 
-        auto dictionaryFileName = QString(":/wordlists/%1_wordlist.txt").arg(m_transcriptLang);
+        auto dictionaryFileName = QString(":/wordlists/%1.txt").arg(m_transcriptLang);
         m_dictionary = listFromFile(dictionaryFileName);
-        m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
 
         m_correctedWords.clear();
         auto correctedWordsList = listFromFile(QString("corrected_words_%1.txt").arg(m_transcriptLang));
@@ -294,7 +308,16 @@ void Editor::openTranscript()
             std::copy(correctedWordsList.begin(),
                       correctedWordsList.end(),
                       std::inserter(m_correctedWords, m_correctedWords.begin()));
+
+            for (auto a_word: m_correctedWords) {
+                m_dictionary.insert
+                    (
+                        std::upper_bound(m_dictionary.begin(), m_dictionary.end(), a_word),
+                        a_word
+                );
+            }
         }
+        m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
 
         setContent();
 
@@ -608,10 +631,6 @@ void Editor::setContent()
                     if (!std::binary_search(m_dictionary.begin(),
                                             m_dictionary.end(),
                                             wordText)
-                        &&
-                        !std::binary_search(m_correctedWords.begin(),
-                                            m_correctedWords.end(),
-                                            wordText)
                        )
                         invalidWords.insert(i, j);
                 }
@@ -743,10 +762,6 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
 
                 if (!std::binary_search(m_dictionary.begin(),
                                         m_dictionary.end(),
-                                        wordText)
-                    &&
-                    !std::binary_search(m_correctedWords.begin(),
-                                        m_correctedWords.end(),
                                         wordText)
                     )
                     invalidWords.insert(i, j);
@@ -1244,7 +1259,7 @@ void Editor::selectTags(const QStringList& newTagList)
 
 void Editor::markWordAsCorrect(int blockNumber, int wordNumber)
 {
-    auto textToInsert = m_blocks[blockNumber].words[wordNumber].text;
+    auto textToInsert = m_blocks[blockNumber].words[wordNumber].text.toLower();
 
     if (textToInsert.trimmed() == "")
         return;
@@ -1257,6 +1272,13 @@ void Editor::markWordAsCorrect(int blockNumber, int wordNumber)
         return;
     }
 
+    m_dictionary.insert
+    (
+            std::upper_bound(m_dictionary.begin(), m_dictionary.end(), textToInsert),
+            textToInsert
+    );
+
+    static_cast<QStringListModel*>(m_textCompleter->model())->setStringList(m_dictionary);
     m_correctedWords.insert(textToInsert);
 
     QMultiMap<int, int> invalidWords;
@@ -1269,10 +1291,6 @@ void Editor::markWordAsCorrect(int blockNumber, int wordNumber)
 
             if (!std::binary_search(m_dictionary.begin(),
                                     m_dictionary.end(),
-                                    wordText)
-                &&
-                !std::binary_search(m_correctedWords.begin(),
-                                    m_correctedWords.end(),
                                     wordText)
                 )
                 invalidWords.insert(i, j);
