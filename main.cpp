@@ -46,7 +46,7 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext &context, con
     QString logLevelName = msgLevelHash[type];
     QString logText = QString("%1 %2 %3 (%4)").arg(dateTimeText, logLevelName, msg,  context.file);
 
-    textStream << logText << Qt::endl;
+    textStream << logText << "\n";
 }
 
 int main(int argc, char *argv[])
