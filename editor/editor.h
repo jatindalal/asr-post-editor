@@ -14,6 +14,9 @@
 #include <QCompleter>
 #include <QAbstractItemModel>
 #include <set>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
 
 class Highlighter;
 
@@ -50,6 +53,7 @@ protected:
 signals:
     void jumpToPlayer(const QTime& time);
     void refreshTagList(const QStringList& tagList);
+    void replyCame();
 
 public slots:
     void openTranscript();
@@ -70,6 +74,8 @@ public slots:
     void wordWiseJump(const QString& jumpDirection);
     void blockWiseJump(const QString& jumpDirection);
 
+    void useTransliteration(bool value, const QString& langCode = "en");
+
 private slots:
     void contentChanged(int position, int charsRemoved, int charsAdded);
     void wordEditorChanged();
@@ -83,6 +89,10 @@ private slots:
 
     void insertSpeakerCompletion(const QString& completion);
     void insertTextCompletion(const QString& completion);
+    void insertTransliterationCompletion(const QString &completion);
+
+    void handleReply();
+    void sendRequest(const QString& input, const QString& langCode);
 
 private:
     static QTime getTime(const QString& text);
@@ -106,9 +116,14 @@ private:
     ChangeSpeakerDialog* m_changeSpeaker = nullptr;
     TimePropagationDialog* m_propagateTime = nullptr;
     TagSelectionDialog* m_selectTag = nullptr;
-    QCompleter *m_speakerCompleter = nullptr, *m_textCompleter = nullptr;
+    QCompleter *m_speakerCompleter = nullptr, *m_textCompleter = nullptr, *m_transliterationCompleter = nullptr;
     QStringList m_dictionary;
     std::set<QString> m_correctedWords;
+    bool m_transliterate = false;
+    QString m_transliterateLangCode;
+    QStringList m_lastReplyList;
+    QNetworkAccessManager m_manager;
+    QNetworkReply* m_reply = nullptr;
 };
 
 

@@ -10,6 +10,8 @@
 #include <QMessageBox>
 #include <QMenu>
 #include <algorithm>
+#include <QEventLoop>
+#include <QTimer>
 #include <QDebug>
 
 Editor::Editor(QWidget *parent) : TextEditor(parent)
@@ -39,6 +41,15 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
     m_textCompleter->setCompletionMode(QCompleter::PopupCompletion);
     m_textCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
 
+    m_transliterationCompleter = new QCompleter(this);
+    m_transliterationCompleter->setWidget(this);
+    m_transliterationCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+    m_transliterationCompleter->setWrapAround(false);
+    m_transliterationCompleter->setCompletionMode(QCompleter::PopupCompletion);
+    m_transliterationCompleter->setModel(new QStringListModel);
+
+
+
     m_dictionary = listFromFile(":/wordlists/english.txt");
     m_transcriptLang = "english";
     auto correctedWordsList = listFromFile(QString("corrected_words_%1.txt").arg(m_transcriptLang));
@@ -47,7 +58,7 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
                   correctedWordsList.end(),
                   std::inserter(m_correctedWords, m_correctedWords.begin()));
 
-        for (auto a_word: m_correctedWords) {
+        for (auto& a_word: m_correctedWords) {
             m_dictionary.insert
                     (
                             std::upper_bound(m_dictionary.begin(), m_dictionary.end(), a_word),
@@ -60,7 +71,9 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
     connect(m_speakerCompleter, QOverload<const QString &>::of(&QCompleter::activated),
                      this, &Editor::insertSpeakerCompletion);
     connect(m_textCompleter, QOverload<const QString &>::of(&QCompleter::activated),
-                     this, &Editor::insertTextCompletion);
+                     this, &Editor::insertTextCompletion );
+    connect(m_transliterationCompleter, QOverload<const QString &>::of(&QCompleter::activated),
+            this, &Editor::insertTransliterationCompletion);
 }
 
 void Highlighter::highlightBlock(const QString& text)
@@ -148,7 +161,8 @@ void Editor::keyPressEvent(QKeyEvent *event)
         createTimePropagationDialog();
 
     if ((m_speakerCompleter && m_speakerCompleter->popup()->isVisible())
-            || (m_textCompleter && m_textCompleter->popup()->isVisible())) {
+            || (m_textCompleter && m_textCompleter->popup()->isVisible())
+            || (m_transliterationCompleter && m_transliterationCompleter->popup()->isVisible())) {
         // The following keys are forwarded by the completer to the widget
        switch (event->key()) {
        case Qt::Key_Enter:
@@ -179,6 +193,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
     if (!shortcutPressed && (hasModifier || event->text().isEmpty() || eow.contains(event->text().right(1)))) {
         m_speakerCompleter->popup()->hide();
         m_textCompleter->popup()->hide();
+        m_transliterationCompleter->popup()->hide();
         return;
     }
 
@@ -215,7 +230,10 @@ void Editor::keyPressEvent(QKeyEvent *event)
             return;
         }
 
-        m_completer = m_textCompleter;
+        if (!m_transliterate)
+            m_completer = m_textCompleter;
+        else
+            m_completer = m_transliterationCompleter;
     }
     else
         return;
@@ -223,11 +241,28 @@ void Editor::keyPressEvent(QKeyEvent *event)
     if (!m_completer)
         return;
 
+    if (m_transliterate) {
+        QTimer replyTimer;
+        replyTimer.setSingleShot(true);
+        QEventLoop loop;
+        connect(this, &Editor::replyCame, &loop, &QEventLoop::quit);
+        connect(&replyTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
 
-    if (completionPrefix != m_completer->completionPrefix()) {
+        sendRequest(completionPrefix, m_transliterateLangCode);
+        replyTimer.start(1000);
+        loop.exec();
+
+        static_cast<QStringListModel*>(m_completer->model())->setStringList(m_lastReplyList);
+        qDebug() << m_lastReplyList;
+    }
+
+
+    if (!m_transliterate && completionPrefix != m_completer->completionPrefix()) {
         m_completer->setCompletionPrefix(completionPrefix);
         m_completer->popup()->setCurrentIndex(m_completer->completionModel()->index(0, 0));
     }
+    else
+        m_completer->popup()->setCurrentIndex(m_completer->completionModel()->index(0, 0));
 
     QRect cr = cursorRect();
     cr.setWidth(m_completer->popup()->sizeHintForColumn(0)
@@ -1124,6 +1159,12 @@ void Editor::blockWiseJump(const QString& jumpDirection)
 
 }
 
+void Editor::useTransliteration(bool value, const QString& langCode)
+{
+    m_transliterate = value;
+    m_transliterateLangCode = langCode;
+}
+
 void Editor::updateWordEditor()
 {
     if (!m_wordEditor || dontUpdateWordEditor)
@@ -1340,4 +1381,55 @@ void Editor::insertTextCompletion(const QString& completion)
     tc.insertText(completion.right(extra));
 
     setTextCursor(tc);
+}
+
+void Editor::insertTransliterationCompletion(const QString& completion)
+{
+    if (m_textCompleter->widget() != this)
+        return;
+
+    QTextCursor tc = textCursor();
+    tc.select(QTextCursor::WordUnderCursor);
+    tc.insertText(completion);
+
+    setTextCursor(tc);
+}
+
+void Editor::handleReply()
+{
+    QStringList tokens;
+
+    QString replyString = m_reply->readAll();
+
+    if (replyString.split("[\"").size() < 4)
+        return;
+
+    tokens = replyString.split("[\"")[3].split("]").first().split("\",\"");
+
+    auto lastString = tokens[tokens.size() - 1];
+    tokens[tokens.size() - 1] = lastString.left(lastString.size() - 1);
+
+    m_lastReplyList = tokens;
+}
+
+void Editor::sendRequest(const QString& input, const QString& langCode)
+{
+    if (m_reply) {
+        m_reply->abort();
+        delete m_reply;
+        m_reply = nullptr;
+    }
+
+    QString url = QString("https://inputtools.google.com/request?text=%1&itc=%2-t-i0-und&num=10&cp=0&cs=1&ie=utf-8&oe=utf-8&app=test").arg(input, langCode);
+
+    QNetworkRequest request(url);
+    m_reply = m_manager.get(request);
+
+    connect(m_reply, &QNetworkReply::finished, this, [this] () {
+        if (m_reply->error() == QNetworkReply::NoError)
+            handleReply();
+        else if (m_reply->error() != QNetworkReply::OperationCanceledError)
+            emit message(m_reply->errorString());
+        emit replyCame();
+    });
 }

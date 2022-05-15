@@ -25,11 +25,14 @@ private slots:
     void createKeyboardShortcutGuide();
     void changeFont();
     void changeFontSize(int change);
+    void transliterationSelected(QAction* action);
 
 private:
     void setFontForElements();
+    void setTransliterationLangCodes();
 
     MediaPlayer *player = nullptr;
     Ui::Tool *ui;
     QFont font;
+    QMap<QString, QString> m_transliterationLang;
 };

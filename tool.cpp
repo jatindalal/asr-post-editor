@@ -25,6 +25,8 @@ Tool::Tool(QWidget *parent)
 
     ui->m_wordEditor->setHidden(true);
 
+    setTransliterationLangCodes();
+
     connect(ui->close, &QAction::triggered, this, &QMainWindow::close);
 
     // Connect Player Controls and Media Player
@@ -97,6 +99,30 @@ Tool::Tool(QWidget *parent)
     connect(ui->m_editor, &Editor::jumpToPlayer, player, &MediaPlayer::setPositionToTime);
     connect(ui->m_editor, &Editor::refreshTagList, ui->m_tagListDisplay, &TagListDisplayWidget::refreshTags);
 
+    auto useTransliterationMenu = new QMenu("Use Transliteration", ui->menuEditor);
+    auto group = new QActionGroup(this);
+    auto langs = m_transliterationLang.keys();
+
+    auto none = new QAction("None");
+    none->setActionGroup(group);
+    none->setCheckable(true);
+    none->setChecked(true);
+    none->setActionGroup(group);
+    useTransliterationMenu->addAction(none);
+
+    for(int i = 0; i < langs.size(); i++) {
+        auto action = new QAction(langs[i]);
+        action->setCheckable(true);
+        action->setActionGroup(group);
+        useTransliterationMenu->addAction(action);
+    }
+    group->setExclusive(true);
+    ui->menuEditor->addMenu(useTransliterationMenu);
+
+    connect(group, &QActionGroup::triggered, this, &Tool::transliterationSelected);
+
+
+    // Connect keyboard shortcuts guide to help action
     connect(ui->help_keyboardShortcuts, &QAction::triggered, this, &Tool::createKeyboardShortcutGuide);
 
     // Connect position slider change to player position
@@ -181,4 +207,26 @@ void Tool::setFontForElements()
     ui->m_wordEditor->fitTableContents();
 
     ui->m_tagListDisplay->setFont(font);
+}
+
+void Tool::setTransliterationLangCodes()
+{
+    QStringList languages = QString("ENGLISH AMHARIC ARABIC BENGALI CHINESE GREEK GUJARATI HINDI KANNADA MALAYALAM MARATHI NEPALI ORIYA PERSIAN PUNJABI RUSSIAN SANSKRIT SINHALESE SERBIAN TAMIL TELUGU TIGRINYA URDU").split(" ");
+    QStringList langCodes = QString("en am ar bn zh el gu hi kn ml mr ne or fa pa ru sa si sr ta te ti ur").split(" ");
+
+    for (int i = 0; i < languages.size(); i++)
+        m_transliterationLang.insert(languages[i], langCodes[i]);
+}
+
+void Tool::transliterationSelected(QAction* action)
+{
+    if (action->text() == "None") {
+        ui->m_editor->useTransliteration(false);
+        return;
+    }
+
+
+    auto langCode = m_transliterationLang[action->text()];
+    qDebug() << langCode;
+    ui->m_editor->useTransliteration(true, langCode);
 }
