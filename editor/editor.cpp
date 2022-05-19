@@ -241,7 +241,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
     if (!m_completer)
         return;
 
-    if (m_transliterate) {
+    if (m_completer == m_transliterationCompleter) {
         QTimer replyTimer;
         replyTimer.setSingleShot(true);
         QEventLoop loop;
@@ -253,11 +253,10 @@ void Editor::keyPressEvent(QKeyEvent *event)
         loop.exec();
 
         static_cast<QStringListModel*>(m_completer->model())->setStringList(m_lastReplyList);
-        qDebug() << m_lastReplyList;
     }
 
 
-    if (!m_transliterate && completionPrefix != m_completer->completionPrefix()) {
+    if (m_completer != m_transliterationCompleter && completionPrefix != m_completer->completionPrefix()) {
         m_completer->setCompletionPrefix(completionPrefix);
         m_completer->popup()->setCurrentIndex(m_completer->completionModel()->index(0, 0));
     }
