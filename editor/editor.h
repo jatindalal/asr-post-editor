@@ -33,14 +33,13 @@ public:
         connect(m_wordEditor, &QTableWidget::itemChanged, this, &Editor::wordEditorChanged);
     }
 
-    QCompleter* textCompleter()
+    void setEditorFont(const QFont& font)
     {
-        return m_textCompleter;
-    }
-
-    QCompleter* speakerCompleter()
-    {
-        return m_speakerCompleter;
+        document()->setDefaultFont(font);
+        m_textCompleter->popup()->setFont(font);
+        m_speakerCompleter->popup()->setFont(font);
+        m_transliterationCompleter->popup()->setFont(font);
+        setLineNumberAreaFont(font);
     }
 
     QRegularExpression timeStampExp, speakerExp;
@@ -104,7 +103,7 @@ private:
     void helpJumpToPlayer();
 
     block fromEditor(qint64 blockNumber) const;
-    QStringList listFromFile(const QString& fileName) const;
+    static QStringList listFromFile(const QString& fileName) ;
 
     bool settingContent{false}, updatingWordEditor{false}, dontUpdateWordEditor{false};
 

@@ -15,6 +15,11 @@ public:
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
 
+    void setLineNumberAreaFont(const QFont& font)
+    {
+        lineNumberArea->setFont(font);
+    }
+
 public slots:
     void findReplace();
 

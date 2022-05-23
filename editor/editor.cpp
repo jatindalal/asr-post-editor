@@ -343,7 +343,7 @@ void Editor::openTranscript()
                       correctedWordsList.end(),
                       std::inserter(m_correctedWords, m_correctedWords.begin()));
 
-            for (auto a_word: m_correctedWords) {
+            for (const auto& a_word: m_correctedWords) {
                 m_dictionary.insert
                     (
                         std::upper_bound(m_dictionary.begin(), m_dictionary.end(), a_word),
@@ -449,7 +449,6 @@ word Editor::makeWord(const QTime& t, const QString& s, const QStringList& tagLi
     return w;
 }
 
-// TODO: Space in a speaker name breaks speaker detection
 block Editor::fromEditor(qint64 blockNumber) const
 {
     QTime timeStamp;
@@ -616,7 +615,7 @@ void Editor::helpJumpToPlayer()
     emit jumpToPlayer(timeToJump);
 }
 
-QStringList Editor::listFromFile(const QString& fileName) const
+QStringList Editor::listFromFile(const QString& fileName)
 {
     QStringList words;
 
@@ -685,14 +684,13 @@ void Editor::contentChanged(int position, int charsRemoved, int charsAdded)
     // If chars aren't added or deleted then return
     if (!(charsAdded || charsRemoved) || settingContent)
         return;
-    else if (!m_blocks.size()) { // If block data is empty (i.e. no file opened) just fill them from editor
+    else if (m_blocks.isEmpty()) { // If block data is empty (i.e. no file opened) just fill them from editor
         for (int i = 0; i < document()->blockCount(); i++)
             m_blocks.append(fromEditor(i));
         return;
     }
 
-    if (m_highlighter)
-        delete m_highlighter;
+    delete m_highlighter;
     m_highlighter = new Highlighter(this->document());
 
     int currentBlockNumber = textCursor().blockNumber();
@@ -937,7 +935,7 @@ void Editor::mergeDown()
 
 void Editor::createChangeSpeakerDialog()
 {
-    if (!m_blocks.size())
+    if (m_blocks.isEmpty())
         return;
 
     m_changeSpeaker = new ChangeSpeakerDialog(this);
@@ -963,7 +961,7 @@ void Editor::createChangeSpeakerDialog()
 
 void Editor::createTimePropagationDialog()
 {
-    if (!m_blocks.size())
+    if (m_blocks.isEmpty())
         return;
 
     m_propagateTime = new TimePropagationDialog(this);
@@ -987,7 +985,7 @@ void Editor::createTimePropagationDialog()
 
 void Editor::createTagSelectionDialog()
 {
-    if (!m_blocks.size())
+    if (m_blocks.isEmpty())
         return;
 
     m_selectTag = new TagSelectionDialog(this);
@@ -1194,7 +1192,7 @@ void Editor::wordEditorChanged()
         return;
 
     auto& block = m_blocks[editorBlockNumber];
-    if (!block.words.size()) {
+    if (block.words.isEmpty()) {
         block.words = m_wordEditor->currentWords();
         return;
     }
