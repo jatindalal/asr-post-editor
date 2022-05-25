@@ -13,6 +13,7 @@
 #include <QTextDocument>
 #include <QCompleter>
 #include <QAbstractItemModel>
+#include <qcompleter.h>
 #include <set>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -96,6 +97,7 @@ private slots:
 private:
     static QTime getTime(const QString& text);
     static word makeWord(const QTime& t, const QString& s, const QStringList& tagList);
+    QCompleter* makeCompleter(); 
 
     void loadTranscriptData(QFile& file);
     void setContent();

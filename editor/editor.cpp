@@ -28,24 +28,12 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
             emit refreshTagList(m_blocks[textCursor().blockNumber()].tagList);
     });
 
-    m_speakerCompleter = new QCompleter(this);
-    m_speakerCompleter->setWidget(this);
-    m_speakerCompleter->setCaseSensitivity(Qt::CaseInsensitive);
-    m_speakerCompleter->setWrapAround(false);
-    m_speakerCompleter->setCompletionMode(QCompleter::PopupCompletion);
+    m_speakerCompleter = makeCompleter();
 
-    m_textCompleter = new QCompleter(this);
-    m_textCompleter->setWidget(this);
-    m_textCompleter->setCaseSensitivity(Qt::CaseInsensitive);
-    m_textCompleter->setWrapAround(false);
-    m_textCompleter->setCompletionMode(QCompleter::PopupCompletion);
+    m_textCompleter = makeCompleter();
     m_textCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
 
-    m_transliterationCompleter = new QCompleter(this);
-    m_transliterationCompleter->setWidget(this);
-    m_transliterationCompleter->setCaseSensitivity(Qt::CaseInsensitive);
-    m_transliterationCompleter->setWrapAround(false);
-    m_transliterationCompleter->setCompletionMode(QCompleter::PopupCompletion);
+    m_transliterationCompleter = makeCompleter();
     m_transliterationCompleter->setModel(new QStringListModel);
 
 
@@ -66,6 +54,8 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
                     );
         }
     }
+
+
     m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
 
     connect(m_speakerCompleter, QOverload<const QString &>::of(&QCompleter::activated),
@@ -246,7 +236,11 @@ void Editor::keyPressEvent(QKeyEvent *event)
         replyTimer.setSingleShot(true);
         QEventLoop loop;
         connect(this, &Editor::replyCame, &loop, &QEventLoop::quit);
-        connect(&replyTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        connect(&replyTimer, &QTimer::timeout, &loop,
+                [&]() {
+                    emit message("Reply Timeout, Network Connection is slow or inaccessible", 2000);
+                    loop.quit();
+        });
 
         sendRequest(completionPrefix, m_transliterateLangCode);
         replyTimer.start(1000);
@@ -447,6 +441,17 @@ word Editor::makeWord(const QTime& t, const QString& s, const QStringList& tagLi
 {
     word w = {t, s, tagList};
     return w;
+}
+
+QCompleter* Editor::makeCompleter()
+{   
+    auto completer = new QCompleter(this); 
+    completer->setWidget(this); 
+    completer->setCaseSensitivity(Qt::CaseInsensitive); 
+    completer->setWrapAround(false); 
+    completer->setCompletionMode(QCompleter::PopupCompletion); 
+
+    return completer;
 }
 
 block Editor::fromEditor(qint64 blockNumber) const
