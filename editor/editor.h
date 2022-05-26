@@ -56,8 +56,9 @@ signals:
     void replyCame();
 
 public slots:
-    void openTranscript();
-    void saveTranscript();
+    void transcriptOpen();
+    void transcriptSave();
+    void transcriptSaveAs();
     void highlightTranscript(const QTime& elapsedTime);
 
     void showBlocksFromData();
@@ -111,6 +112,7 @@ private:
 
     QVector<block> m_blocks;
     QString m_transcriptLang, m_punctuation{",.!;:"};
+    QUrl m_transcriptUrl;
     Highlighter* m_highlighter = nullptr;
     qint64 highlightedBlock = -1, highlightedWord = -1;
     WordEditor* m_wordEditor = nullptr;

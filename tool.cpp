@@ -84,9 +84,10 @@ Tool::Tool(QWidget *parent)
     // Connect Editor menu actions and editor controls
     ui->m_editor->setWordEditor(ui->m_wordEditor);
 
-    connect(ui->editor_openTranscript, &QAction::triggered, ui->m_editor, &Editor::openTranscript);
+    connect(ui->editor_openTranscript, &QAction::triggered, ui->m_editor, &Editor::transcriptOpen);
     connect(ui->editor_debugBlocks, &QAction::triggered, ui->m_editor, &Editor::showBlocksFromData);
-    connect(ui->editor_save, &QAction::triggered, ui->m_editor, &Editor::saveTranscript);
+    connect(ui->editor_save, &QAction::triggered, ui->m_editor, &Editor::transcriptSave);
+    connect(ui->editor_saveAs, &QAction::triggered, ui->m_editor, &Editor::transcriptSaveAs);
     connect(ui->editor_jumpToLine, &QAction::triggered, ui->m_editor, &Editor::jumpToHighlightedLine);
     connect(ui->editor_splitLine, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->splitLine(player->elapsedTime());});
     connect(ui->editor_mergeUp, &QAction::triggered, ui->m_editor, &Editor::mergeUp);

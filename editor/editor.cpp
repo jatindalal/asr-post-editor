@@ -306,7 +306,7 @@ void Editor::contextMenuEvent(QContextMenuEvent *event)
     delete menu;
 }
 
-void Editor::openTranscript()
+void Editor::transcriptOpen()
 {
     QFileDialog fileDialog(this);
     fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
@@ -315,6 +315,7 @@ void Editor::openTranscript()
 
     if (fileDialog.exec() == QDialog::Accepted) {
         QUrl *fileUrl = new QUrl(fileDialog.selectedUrls().constFirst());
+        m_transcriptUrl = *fileUrl;
         QFile transcriptFile(fileUrl->toLocalFile());
 
         if (!transcriptFile.open(QIODevice::ReadOnly)) {
@@ -356,7 +357,22 @@ void Editor::openTranscript()
     }
 }
 
-void Editor::saveTranscript()
+void Editor::transcriptSave()
+{
+    if (m_transcriptUrl.isEmpty())
+        transcriptSaveAs();
+    else {
+        QFile *file = new QFile(m_transcriptUrl.toLocalFile());
+        if (!file->open(QIODevice::WriteOnly | QFile::Truncate)) {
+            emit message(file->errorString());
+            return;
+        }
+        saveXml(file);
+        emit message("File Saved " + m_transcriptUrl.toLocalFile());
+    }
+}
+
+void Editor::transcriptSaveAs()
 {
     QFileDialog fileDialog(this);
     fileDialog.setAcceptMode(QFileDialog::AcceptSave);
@@ -373,6 +389,7 @@ void Editor::saveTranscript()
                 return;
             }
             saveXml(file);
+            emit message("File Saved " + fileUrl.toLocalFile());
         }
     }
 }
