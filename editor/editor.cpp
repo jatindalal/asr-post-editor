@@ -14,11 +14,13 @@
 #include <QTimer>
 #include <QDebug>
 
-Editor::Editor(QWidget *parent) : TextEditor(parent)
+Editor::Editor(QWidget *parent)
+    : TextEditor(parent),
+    m_speakerCompleter(makeCompleter()), m_textCompleter(makeCompleter()), m_transliterationCompleter(makeCompleter()),
+    m_dictionary(listFromFile(":/wordlists/english.txt")), m_transcriptLang("english"),
+    timeStampExp(QRegularExpression(R"(\[(\d?\d:)?[0-5]?\d:[0-5]?\d(\.\d\d?\d?)?])")),
+    speakerExp(QRegularExpression(R"(\[.*]:)"))
 {
-    timeStampExp = QRegularExpression(R"(\[(\d?\d:)?[0-5]?\d:[0-5]?\d(\.\d\d?\d?)?])");
-    speakerExp = QRegularExpression(R"(\[.*]:)");
-
     connect(this->document(), &QTextDocument::contentsChange, this, &Editor::contentChanged);
     connect(this, &Editor::cursorPositionChanged, this, &Editor::updateWordEditor);
     connect(this, &Editor::cursorPositionChanged, this,
@@ -28,18 +30,9 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
             emit refreshTagList(m_blocks[textCursor().blockNumber()].tagList);
     });
 
-    m_speakerCompleter = makeCompleter();
-
-    m_textCompleter = makeCompleter();
     m_textCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
-
-    m_transliterationCompleter = makeCompleter();
     m_transliterationCompleter->setModel(new QStringListModel);
 
-
-
-    m_dictionary = listFromFile(":/wordlists/english.txt");
-    m_transcriptLang = "english";
     auto correctedWordsList = listFromFile(QString("corrected_words_%1.txt").arg(m_transcriptLang));
     if (!correctedWordsList.isEmpty()) {
         std::copy(correctedWordsList.begin(),
@@ -54,8 +47,6 @@ Editor::Editor(QWidget *parent) : TextEditor(parent)
                     );
         }
     }
-
-
     m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
 
     connect(m_speakerCompleter, QOverload<const QString &>::of(&QCompleter::activated),
@@ -144,15 +135,19 @@ void Editor::mousePressEvent(QMouseEvent *e)
 
 void Editor::keyPressEvent(QKeyEvent *event)
 {
-
     if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_R)
         createChangeSpeakerDialog();
     else if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_T)
         createTimePropagationDialog();
 
-    if ((m_speakerCompleter && m_speakerCompleter->popup()->isVisible())
-            || (m_textCompleter && m_textCompleter->popup()->isVisible())
-            || (m_transliterationCompleter && m_transliterationCompleter->popup()->isVisible())) {
+    auto checkPopupVisible = [](QCompleter* completer) {
+        return completer && completer->popup()->isVisible();
+    };
+
+    if (checkPopupVisible(m_textCompleter)
+            || checkPopupVisible(m_speakerCompleter)
+            || checkPopupVisible(m_transliterationCompleter)
+        ) {
         // The following keys are forwarded by the completer to the widget
        switch (event->key()) {
        case Qt::Key_Enter:
@@ -176,7 +171,6 @@ void Editor::keyPressEvent(QKeyEvent *event)
     const bool shortcutPressed = (event->key() == Qt::Key_N && event->modifiers() == Qt::ControlModifier);
     const bool hasModifier = (event->modifiers() != Qt::NoModifier);
     const bool containsSpeakerBraces = blockText.leftRef(blockText.indexOf(" ")).contains("]:");
-
 
     static QString eow("~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-="); // end of word
 
@@ -211,11 +205,16 @@ void Editor::keyPressEvent(QKeyEvent *event)
                 && textTillCursor.count(" ") == blockText.count(" "))
             return;
 
-        QTextCursor tc = textCursor();
-        tc.select(QTextCursor::WordUnderCursor);
-        completionPrefix = tc.selectedText();
+        int index = textTillCursor.count(" ");
+        completionPrefix = blockText.split(" ")[index];
 
-        if (completionPrefix.size() < 2) {
+        if (completionPrefix.isEmpty()){
+            m_textCompleter->popup()->hide();
+            m_transliterationCompleter->popup()->hide();
+            return;
+        }
+
+        if (completionPrefix.size() < 2 && !m_transliterate) {
             m_textCompleter->popup()->hide();
             return;
         }
@@ -246,16 +245,14 @@ void Editor::keyPressEvent(QKeyEvent *event)
         replyTimer.start(1000);
         loop.exec();
 
-        static_cast<QStringListModel*>(m_completer->model())->setStringList(m_lastReplyList);
+        dynamic_cast<QStringListModel*>(m_completer->model())->setStringList(m_lastReplyList);
     }
 
 
     if (m_completer != m_transliterationCompleter && completionPrefix != m_completer->completionPrefix()) {
         m_completer->setCompletionPrefix(completionPrefix);
-        m_completer->popup()->setCurrentIndex(m_completer->completionModel()->index(0, 0));
     }
-    else
-        m_completer->popup()->setCurrentIndex(m_completer->completionModel()->index(0, 0));
+    m_completer->popup()->setCurrentIndex(m_completer->completionModel()->index(0, 0));
 
     QRect cr = cursorRect();
     cr.setWidth(m_completer->popup()->sizeHintForColumn(0)
@@ -362,7 +359,7 @@ void Editor::transcriptSave()
     if (m_transcriptUrl.isEmpty())
         transcriptSaveAs();
     else {
-        QFile *file = new QFile(m_transcriptUrl.toLocalFile());
+        auto *file = new QFile(m_transcriptUrl.toLocalFile());
         if (!file->open(QIODevice::WriteOnly | QFile::Truncate)) {
             emit message(file->errorString());
             return;
@@ -451,7 +448,6 @@ QTime Editor::getTime(const QString& text)
         if (text.count(":") == 2) return QTime::fromString(text, "h:m:s");
         return QTime::fromString(text, "m:s");
     }
-    return {};
 }
 
 word Editor::makeWord(const QTime& t, const QString& s, const QStringList& tagList)
@@ -1439,7 +1435,7 @@ void Editor::sendRequest(const QString& input, const QString& langCode)
         m_reply = nullptr;
     }
 
-    QString url = QString("https://inputtools.google.com/request?text=%1&itc=%2-t-i0-und&num=10&cp=0&cs=1&ie=utf-8&oe=utf-8&app=test").arg(input, langCode);
+    QString url = QString("http://inputtools.google.com/request?text=%1&itc=%2-t-i0-und&num=10&cp=0&cs=1&ie=utf-8&oe=utf-8&app=test").arg(input, langCode);
 
     QNetworkRequest request(url);
     m_reply = m_manager.get(request);
