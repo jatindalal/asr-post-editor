@@ -18,6 +18,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QTimer>
 
 class Highlighter;
 
@@ -59,6 +60,7 @@ public slots:
     void transcriptOpen();
     void transcriptSave();
     void transcriptSaveAs();
+    void transcriptClose();
     void highlightTranscript(const QTime& elapsedTime);
 
     void showBlocksFromData();
@@ -127,6 +129,8 @@ private:
     QStringList m_lastReplyList;
     QNetworkAccessManager m_manager;
     QNetworkReply* m_reply = nullptr;
+    QTimer* m_saveTimer = nullptr;
+    int m_saveInterval{20};
 };
 
 

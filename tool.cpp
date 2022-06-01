@@ -88,6 +88,7 @@ Tool::Tool(QWidget *parent)
     connect(ui->editor_debugBlocks, &QAction::triggered, ui->m_editor, &Editor::showBlocksFromData);
     connect(ui->editor_save, &QAction::triggered, ui->m_editor, &Editor::transcriptSave);
     connect(ui->editor_saveAs, &QAction::triggered, ui->m_editor, &Editor::transcriptSaveAs);
+    connect(ui->editor_close, &QAction::triggered, ui->m_editor, &Editor::transcriptClose);
     connect(ui->editor_jumpToLine, &QAction::triggered, ui->m_editor, &Editor::jumpToHighlightedLine);
     connect(ui->editor_splitLine, &QAction::triggered, ui->m_editor, [&]() {ui->m_editor->splitLine(player->elapsedTime());});
     connect(ui->editor_mergeUp, &QAction::triggered, ui->m_editor, &Editor::mergeUp);

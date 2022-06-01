@@ -11,7 +11,6 @@
 #include <QMenu>
 #include <algorithm>
 #include <QEventLoop>
-#include <QTimer>
 #include <QDebug>
 
 Editor::Editor(QWidget *parent)
@@ -19,7 +18,8 @@ Editor::Editor(QWidget *parent)
     m_speakerCompleter(makeCompleter()), m_textCompleter(makeCompleter()), m_transliterationCompleter(makeCompleter()),
     m_dictionary(listFromFile(":/wordlists/english.txt")), m_transcriptLang("english"),
     timeStampExp(QRegularExpression(R"(\[(\d?\d:)?[0-5]?\d:[0-5]?\d(\.\d\d?\d?)?])")),
-    speakerExp(QRegularExpression(R"(\[.*]:)"))
+    speakerExp(QRegularExpression(R"(\[.*]:)")),
+    m_saveTimer(new QTimer(this))
 {
     connect(this->document(), &QTextDocument::contentsChange, this, &Editor::contentChanged);
     connect(this, &Editor::cursorPositionChanged, this, &Editor::updateWordEditor);
@@ -55,6 +55,13 @@ Editor::Editor(QWidget *parent)
                      this, &Editor::insertTextCompletion );
     connect(m_transliterationCompleter, QOverload<const QString &>::of(&QCompleter::activated),
             this, &Editor::insertTransliterationCompletion);
+
+    
+    connect(m_saveTimer, &QTimer::timeout, this, [this](){
+        if (m_transcriptUrl.isValid())
+            transcriptSave();
+    });
+    m_saveTimer->start(m_saveInterval * 1000);
 }
 
 void Highlighter::highlightBlock(const QString& text)
@@ -320,6 +327,8 @@ void Editor::transcriptOpen()
             return;
         }
 
+        m_saveTimer->stop();
+
         loadTranscriptData(transcriptFile);
 
         if (m_transcriptLang == "")
@@ -351,6 +360,8 @@ void Editor::transcriptOpen()
             emit message("Opened transcript " + fileUrl->fileName() + " Language: " + m_transcriptLang);
         else
             emit message("Opened transcript " + fileUrl->fileName());
+
+        m_saveTimer->start(m_saveInterval * 1000);
     }
 }
 
@@ -389,6 +400,21 @@ void Editor::transcriptSaveAs()
             emit message("File Saved " + fileUrl.toLocalFile());
         }
     }
+}
+
+void Editor::transcriptClose()
+{
+    if (m_transcriptUrl.isEmpty()) {
+        emit message("No file open");
+        return;
+    }
+
+
+    emit message("Closing file " + m_transcriptUrl.toLocalFile());
+    m_transcriptUrl.clear();
+    m_blocks.clear();
+    m_transcriptLang = "english";
+    clear();
 }
 
 void Editor::showBlocksFromData()
