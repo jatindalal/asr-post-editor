@@ -72,12 +72,14 @@ public slots:
     void createTimePropagationDialog();
     void createTagSelectionDialog();
     void insertTimeStamp(const QTime& elapsedTime);
+    void changeTranscriptLang();
 
     void speakerWiseJump(const QString& jumpDirection);
     void wordWiseJump(const QString& jumpDirection);
     void blockWiseJump(const QString& jumpDirection);
 
     void useTransliteration(bool value, const QString& langCode = "en");
+    void useAutoSave(bool value) {m_autoSave = value;}
 
 private slots:
     void contentChanged(int position, int charsRemoved, int charsAdded);
@@ -106,11 +108,13 @@ private:
     void setContent();
     void saveXml(QFile* file);
     void helpJumpToPlayer();
+    void loadDictionary();
 
     block fromEditor(qint64 blockNumber) const;
     static QStringList listFromFile(const QString& fileName) ;
 
     bool settingContent{false}, updatingWordEditor{false}, dontUpdateWordEditor{false};
+    bool m_transliterate{false}, m_autoSave{false};
 
     QVector<block> m_blocks;
     QString m_transcriptLang, m_punctuation{",.!;:"};
@@ -124,7 +128,6 @@ private:
     QCompleter *m_speakerCompleter = nullptr, *m_textCompleter = nullptr, *m_transliterationCompleter = nullptr;
     QStringList m_dictionary;
     std::set<QString> m_correctedWords;
-    bool m_transliterate = false;
     QString m_transliterateLangCode;
     QStringList m_lastReplyList;
     QNetworkAccessManager m_manager;

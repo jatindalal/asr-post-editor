@@ -139,10 +139,12 @@
     <addaction name="editor_mergeDown"/>
     <addaction name="editor_toggleWords"/>
     <addaction name="separator"/>
+    <addaction name="editor_changeLang"/>
     <addaction name="editor_changeSpeaker"/>
     <addaction name="editor_propagateTime"/>
     <addaction name="editor_editTags"/>
     <addaction name="separator"/>
+    <addaction name="editor_autoSave"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -404,6 +406,19 @@
   <action name="editor_close">
    <property name="text">
     <string>Close</string>
+   </property>
+  </action>
+  <action name="editor_changeLang">
+   <property name="text">
+    <string>Change Transcript Language</string>
+   </property>
+  </action>
+  <action name="editor_autoSave">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Auto Save</string>
    </property>
   </action>
  </widget>

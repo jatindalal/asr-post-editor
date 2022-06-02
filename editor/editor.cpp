@@ -3,6 +3,7 @@
 #include <QPainter>
 #include <QTextBlock>
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QStandardPaths>
 #include <QAbstractItemView>
 #include <QScrollBar>
@@ -33,32 +34,18 @@ Editor::Editor(QWidget *parent)
     m_textCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
     m_transliterationCompleter->setModel(new QStringListModel);
 
-    auto correctedWordsList = listFromFile(QString("corrected_words_%1.txt").arg(m_transcriptLang));
-    if (!correctedWordsList.isEmpty()) {
-        std::copy(correctedWordsList.begin(),
-                  correctedWordsList.end(),
-                  std::inserter(m_correctedWords, m_correctedWords.begin()));
-
-        for (auto& a_word: m_correctedWords) {
-            m_dictionary.insert
-                    (
-                            std::upper_bound(m_dictionary.begin(), m_dictionary.end(), a_word),
-                            a_word
-                    );
-        }
-    }
-    m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
+    loadDictionary();
 
     connect(m_speakerCompleter, QOverload<const QString &>::of(&QCompleter::activated),
                      this, &Editor::insertSpeakerCompletion);
     connect(m_textCompleter, QOverload<const QString &>::of(&QCompleter::activated),
-                     this, &Editor::insertTextCompletion );
+                     this, &Editor::insertTextCompletion);
     connect(m_transliterationCompleter, QOverload<const QString &>::of(&QCompleter::activated),
             this, &Editor::insertTransliterationCompletion);
 
     
     connect(m_saveTimer, &QTimer::timeout, this, [this](){
-        if (m_transcriptUrl.isValid())
+        if (m_autoSave && m_transcriptUrl.isValid())
             transcriptSave();
     });
     m_saveTimer->start(m_saveInterval * 1000);
@@ -334,25 +321,7 @@ void Editor::transcriptOpen()
         if (m_transcriptLang == "")
             m_transcriptLang = "english";
 
-        auto dictionaryFileName = QString(":/wordlists/%1.txt").arg(m_transcriptLang);
-        m_dictionary = listFromFile(dictionaryFileName);
-
-        m_correctedWords.clear();
-        auto correctedWordsList = listFromFile(QString("corrected_words_%1.txt").arg(m_transcriptLang));
-        if (!correctedWordsList.isEmpty()) {
-            std::copy(correctedWordsList.begin(),
-                      correctedWordsList.end(),
-                      std::inserter(m_correctedWords, m_correctedWords.begin()));
-
-            for (const auto& a_word: m_correctedWords) {
-                m_dictionary.insert
-                    (
-                        std::upper_bound(m_dictionary.begin(), m_dictionary.end(), a_word),
-                        a_word
-                );
-            }
-        }
-        m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
+        loadDictionary(); 
 
         setContent();
 
@@ -414,6 +383,8 @@ void Editor::transcriptClose()
     m_transcriptUrl.clear();
     m_blocks.clear();
     m_transcriptLang = "english";
+    
+    loadDictionary();
     clear();
 }
 
@@ -657,6 +628,52 @@ void Editor::helpJumpToPlayer()
     }
 
     emit jumpToPlayer(timeToJump);
+}
+
+void Editor::loadDictionary()
+{
+    m_correctedWords.clear();
+    m_dictionary.clear();
+
+    auto dictionaryFileName = QString(":/wordlists/%1.txt").arg(m_transcriptLang);
+    m_dictionary = listFromFile(dictionaryFileName);
+
+    auto correctedWordsList = listFromFile(QString("corrected_words_%1.txt").arg(m_transcriptLang));
+    if (!correctedWordsList.isEmpty()) {
+        std::copy(correctedWordsList.begin(),
+                  correctedWordsList.end(),
+                  std::inserter(m_correctedWords, m_correctedWords.begin()));
+
+        for (auto& a_word: m_correctedWords) {
+            m_dictionary.insert
+            (
+                std::upper_bound(m_dictionary.begin(), m_dictionary.end(), a_word),
+                a_word
+            );
+        }
+    }
+    m_textCompleter->setModel(new QStringListModel(m_dictionary, m_textCompleter));
+
+    if (!m_highlighter)
+        return;
+
+    QMultiMap<int, int> invalidWords;
+    for (int i = 0; i < m_blocks.size(); i++) {
+        for (int j = 0; j < m_blocks[i].words.size(); j++) {
+            auto wordText = m_blocks[i].words[j].text.toLower();
+
+            if (wordText != "" && m_punctuation.contains(wordText.back()))
+                wordText = wordText.left(wordText.size() - 1);
+
+            if (!std::binary_search(m_dictionary.begin(),
+                                    m_dictionary.end(),
+                                    wordText)
+                )
+                invalidWords.insert(i, j);
+        }
+    }
+    m_highlighter->setInvalidWords(invalidWords);
+    m_highlighter->rehighlight();
 }
 
 QStringList Editor::listFromFile(const QString& fileName)
@@ -1067,6 +1084,14 @@ void Editor::insertTimeStamp(const QTime& elapsedTime)
     qInfo() << "[Inserted TimeStamp from Player]"
             << QString("line number: %1, timestamp: %2").arg(QString::number(blockNumber), elapsedTime.toString("hh:mm:ss.zzz"));
 
+}
+
+void Editor::changeTranscriptLang()
+{
+    auto newLang = QInputDialog::getText(this, "Change Transcript Language", "Current Language: " + m_transcriptLang);
+    m_transcriptLang = newLang.toLower();
+
+    loadDictionary();
 }
 
 void Editor::speakerWiseJump(const QString& jumpDirection)
