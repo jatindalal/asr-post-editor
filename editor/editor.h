@@ -35,14 +35,7 @@ public:
         connect(m_wordEditor, &QTableWidget::itemChanged, this, &Editor::wordEditorChanged);
     }
 
-    void setEditorFont(const QFont& font)
-    {
-        document()->setDefaultFont(font);
-        m_textCompleter->popup()->setFont(font);
-        m_speakerCompleter->popup()->setFont(font);
-        m_transliterationCompleter->popup()->setFont(font);
-        setLineNumberAreaFont(font);
-    }
+    void setEditorFont(const QFont& font);
 
     QRegularExpression timeStampExp, speakerExp;
 

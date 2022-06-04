@@ -49,7 +49,20 @@ Editor::Editor(QWidget *parent)
             transcriptSave();
     });
     m_saveTimer->start(m_saveInterval * 1000);
+
+    m_blocks.append(fromEditor(0));
 }
+
+void Editor::setEditorFont(const QFont& font)
+{
+    document()->setDefaultFont(font);
+    m_textCompleter->popup()->setFont(font);
+    m_speakerCompleter->popup()->setFont(font);
+    m_transliterationCompleter->popup()->setFont(font);
+    setLineNumberAreaFont(font);
+}
+
+
 
 void Highlighter::highlightBlock(const QString& text)
 {
@@ -1077,6 +1090,7 @@ void Editor::insertTimeStamp(const QTime& elapsedTime)
     dontUpdateWordEditor = true;
     setContent();
     QTextCursor cursor(document()->findBlockByNumber(blockNumber));
+    cursor.movePosition(QTextCursor::EndOfBlock);
     setTextCursor(cursor);
     centerCursor();
     dontUpdateWordEditor = false;
