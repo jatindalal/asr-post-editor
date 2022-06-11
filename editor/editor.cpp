@@ -37,9 +37,9 @@ Editor::Editor(QWidget *parent)
     loadDictionary();
 
     connect(m_speakerCompleter, QOverload<const QString &>::of(&QCompleter::activated),
-                     this, &Editor::insertSpeakerCompletion);
+            this, &Editor::insertSpeakerCompletion);
     connect(m_textCompleter, QOverload<const QString &>::of(&QCompleter::activated),
-                     this, &Editor::insertTextCompletion);
+            this, &Editor::insertTextCompletion);
     connect(m_transliterationCompleter, QOverload<const QString &>::of(&QCompleter::activated),
             this, &Editor::insertTransliterationCompletion);
 
@@ -192,8 +192,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 
     if (!textTillCursor.count(" ") && !textTillCursor.contains("]:") && !textTillCursor.contains("]")
             && textTillCursor.size() && containsSpeakerBraces) {
-        //complete speaker
-
+        // Complete speaker
         m_completer = m_speakerCompleter;
 
         completionPrefix = blockText.left(blockText.indexOf(" "));
@@ -206,8 +205,7 @@ void Editor::keyPressEvent(QKeyEvent *event)
 
         m_speakerCompleter->setModel(new QStringListModel(speakers, m_speakerCompleter));
     }
-    else if (textTillCursor.count(" ") > 0) {
-        //complete text
+    else {
         if (m_blocks[textCursor().blockNumber()].timeStamp.isValid()
                 && textTillCursor.count(" ") == blockText.count(" "))
             return;
@@ -226,13 +224,12 @@ void Editor::keyPressEvent(QKeyEvent *event)
             return;
         }
 
+        // Complete text
         if (!m_transliterate)
             m_completer = m_textCompleter;
         else
             m_completer = m_transliterationCompleter;
     }
-    else
-        return;
 
     if (!m_completer)
         return;
