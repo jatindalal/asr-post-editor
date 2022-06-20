@@ -50,6 +50,7 @@ void MediaPlayer::open()
         m_mediaFileName = fileUrl->fileName();
         setMedia(*fileUrl);
         emit message("Opened file " + fileUrl->fileName());
+        play();
     }
 }
 
