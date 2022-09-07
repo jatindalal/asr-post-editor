@@ -28,3 +28,8 @@ cd asr-post-editor
 cmake . -B build -j <no of jobs>
 cmake --build build
 ```
+
+## Sample Video and Transcript
+[Drive link](https://drive.google.com/drive/folders/1TTc0giy8rkz8hfXviKW2W90XpxDBISF7?usp=sharing)
+## Screenshot
+![tool](screenshots/main.png)
